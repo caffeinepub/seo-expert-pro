@@ -8,8 +8,47 @@ import Text "mo:core/Text";
 import Nat64 "mo:core/Nat64";
 import Nat "mo:core/Nat";
 import List "mo:core/List";
+import Principal "mo:core/Principal";
+import MixinAuthorization "authorization/MixinAuthorization";
+import AccessControl "authorization/access-control";
+
+
+// Specify the data migration function in with-clause
 
 actor {
+  // Initialize the user system state
+  let accessControlState = AccessControl.initState();
+  include MixinAuthorization(accessControlState);
+
+  // User Profile Management
+  public type UserProfile = {
+    name : Text;
+  };
+
+  let userProfiles = Map.empty<Principal, UserProfile>();
+
+  public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can access profiles");
+    };
+    userProfiles.get(caller);
+  };
+
+  public query ({ caller }) func getUserProfile(user : Principal) : async ?UserProfile {
+    if (caller != user and not AccessControl.isAdmin(accessControlState, caller)) {
+      Runtime.trap("Unauthorized: Can only view your own profile");
+    };
+    userProfiles.get(user);
+  };
+
+  public shared ({ caller }) func saveCallerUserProfile(profile : UserProfile) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save profiles");
+    };
+    userProfiles.add(caller, profile);
+  };
+
+  // Blog Post Types and Storage
   public type BlogPost = {
     id : Nat;
     title : Text;
@@ -30,8 +69,7 @@ actor {
   let blogPosts = Map.empty<Nat, BlogPost>();
   var nextPostId = 1;
 
-  let contacts = List.empty<ContactFormEntry>();
-
+  // Contact Form Types and Storage
   public type ContactFormEntry = {
     name : Text;
     email : Text;
@@ -40,13 +78,121 @@ actor {
     timestamp : Time.Time;
   };
 
+  let contacts = List.empty<ContactFormEntry>();
+
+  // FAQ Type
   public type FAQEntry = {
     question : Text;
     answer : Text;
   };
 
+  // Chatbot Log Types and Storage
+  public type ChatbotLog = {
+    id : Nat;
+    question : Text;
+    answer : Text;
+    timestamp : Time.Time;
+  };
+
+  var nextLogId = 1;
+  let chatbotLogs = Map.empty<Nat, ChatbotLog>();
+
+  // ─── Email/Password Admin Auth ───────────────────────────────────────────────
+  // Default credentials (reset on each deploy since vars are not stable)
+  var adminEmail : ?Text = ?"amiyadav410@gmail.com";
+  var adminPassword : ?Text = ?"RankPro@2026";
+  let adminSessions = Map.empty<Text, Time.Time>();
+
+  // Check if admin credentials have been set up
+  public query func hasAdminSetup() : async Bool {
+    adminEmail != null;
+  };
+
+  // Setup or reset admin credentials
+  public shared func setupAdminCredentials(email : Text, password : Text) : async Bool {
+    adminEmail := ?email;
+    adminPassword := ?password;
+    true;
+  };
+
+  // Login: returns a session token if credentials match
+  public shared func loginAdmin(email : Text, password : Text) : async ?Text {
+    switch (adminEmail, adminPassword) {
+      case (?storedEmail, ?storedPass) {
+        if (storedEmail == email and storedPass == password) {
+          let token = "tok-" # Nat64.fromIntWrap(Time.now()).toText();
+          let expiry = Time.now() + 86_400_000_000_000; // 24 hours
+          adminSessions.add(token, expiry);
+          ?token;
+        } else {
+          null;
+        };
+      };
+      case _ { null };
+    };
+  };
+
+  // Verify a session token
+  public query func verifyAdminToken(token : Text) : async Bool {
+    switch (adminSessions.get(token)) {
+      case (?expiry) { Time.now() < expiry };
+      case null { false };
+    };
+  };
+
+  // Logout: invalidate a session token
+  public shared func logoutAdmin(token : Text) : async () {
+    ignore adminSessions.remove(token);
+  };
+
+  // Change admin password (requires current password)
+  public shared func changeAdminPassword(email : Text, oldPassword : Text, newPassword : Text) : async Bool {
+    switch (adminEmail, adminPassword) {
+      case (?storedEmail, ?storedPass) {
+        if (storedEmail == email and storedPass == oldPassword) {
+          adminPassword := ?newPassword;
+          true;
+        } else {
+          false;
+        };
+      };
+      case _ { false };
+    };
+  };
+
+  // Token-authenticated contact submissions
+  public query func getContactSubmissionsWithToken(token : Text) : async [ContactFormEntry] {
+    switch (adminSessions.get(token)) {
+      case (?expiry) {
+        if (Time.now() < expiry) {
+          contacts.toArray();
+        } else {
+          Runtime.trap("Session expired");
+        };
+      };
+      case null { Runtime.trap("Invalid token") };
+    };
+  };
+
+  // Token-authenticated chatbot logs
+  public query func getChatbotLogsWithToken(token : Text) : async [ChatbotLog] {
+    switch (adminSessions.get(token)) {
+      case (?expiry) {
+        if (Time.now() < expiry) {
+          chatbotLogs.values().toArray();
+        } else {
+          Runtime.trap("Session expired");
+        };
+      };
+      case null { Runtime.trap("Invalid token") };
+    };
+  };
+
   // Blog Post Methods
   public shared ({ caller }) func createBlogPost(title : Text, excerpt : Text, content : Text, tags : [Text], slug : Text, readTime : Nat) : async Nat {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can create blog posts");
+    };
     let id = nextPostId;
     let post : BlogPost = {
       id;
@@ -63,11 +209,11 @@ actor {
     id;
   };
 
-  public query ({ caller }) func listBlogPosts() : async [BlogPost] {
+  public query func listBlogPosts() : async [BlogPost] {
     blogPosts.values().toArray().sort();
   };
 
-  public query ({ caller }) func getBlogPostById(id : Nat) : async BlogPost {
+  public query func getBlogPostById(id : Nat) : async BlogPost {
     switch (blogPosts.get(id)) {
       case (null) { Runtime.trap("Blog post not found") };
       case (?post) { post };
@@ -75,7 +221,7 @@ actor {
   };
 
   // Contact Form Methods
-  public shared ({ caller }) func submitContactForm(name : Text, email : Text, phone : Text, message : Text) : async () {
+  public shared func submitContactForm(name : Text, email : Text, phone : Text, message : Text) : async () {
     let entry : ContactFormEntry = {
       name;
       email;
@@ -87,11 +233,14 @@ actor {
   };
 
   public query ({ caller }) func getContactSubmissions() : async [ContactFormEntry] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view contact submissions");
+    };
     contacts.toArray();
   };
 
   // FAQ Section
-  public query ({ caller }) func getFAQs() : async [FAQEntry] {
+  public query func getFAQs() : async [FAQEntry] {
     [
       {
         question = "What is SEO?";
@@ -114,5 +263,24 @@ actor {
         answer = "Yes, you can handle basic SEO tasks yourself, but working with an expert can help you develop a more effective strategy and achieve better results.";
       },
     ];
+  };
+
+  // Chatbot Logging Methods
+  public shared func logChatbotMessage(question : Text, answer : Text) : async () {
+    let logEntry : ChatbotLog = {
+      id = nextLogId;
+      question;
+      answer;
+      timestamp = Time.now();
+    };
+    chatbotLogs.add(nextLogId, logEntry);
+    nextLogId += 1;
+  };
+
+  public query ({ caller }) func getChatbotLogs() : async [ChatbotLog] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+      Runtime.trap("Unauthorized: Only admins can view chatbot logs");
+    };
+    chatbotLogs.values().toArray();
   };
 };

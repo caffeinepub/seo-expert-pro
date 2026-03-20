@@ -20,6 +20,12 @@ export interface BlogPost {
   'readTime' : bigint,
   'excerpt' : string,
 }
+export interface ChatbotLog {
+  'id' : bigint,
+  'question' : string,
+  'answer' : string,
+  'timestamp' : Time,
+}
 export interface ContactFormEntry {
   'name' : string,
   'email' : string,
@@ -29,15 +35,28 @@ export interface ContactFormEntry {
 }
 export interface FAQEntry { 'question' : string, 'answer' : string }
 export type Time = bigint;
+export interface UserProfile { 'name' : string }
+export type UserRole = { 'admin' : null } |
+  { 'user' : null } |
+  { 'guest' : null };
 export interface _SERVICE {
+  '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
+  'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
   'createBlogPost' : ActorMethod<
     [string, string, string, Array<string>, string, bigint],
     bigint
   >,
   'getBlogPostById' : ActorMethod<[bigint], BlogPost>,
+  'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
+  'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getChatbotLogs' : ActorMethod<[], Array<ChatbotLog>>,
   'getContactSubmissions' : ActorMethod<[], Array<ContactFormEntry>>,
   'getFAQs' : ActorMethod<[], Array<FAQEntry>>,
+  'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'isCallerAdmin' : ActorMethod<[], boolean>,
   'listBlogPosts' : ActorMethod<[], Array<BlogPost>>,
+  'logChatbotMessage' : ActorMethod<[string, string], undefined>,
+  'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
   'submitContactForm' : ActorMethod<
     [string, string, string, string],
     undefined

@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-router";
 import ChatBot from "./components/ChatBot";
 import About from "./pages/About";
+import AdminPanel from "./pages/AdminPanel";
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import CaseStudies from "./pages/CaseStudies";
@@ -50,6 +51,11 @@ const contactRoute = createRoute({
   path: "/contact",
   component: Contact,
 });
+const adminRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/admin",
+  component: AdminPanel,
+});
 
 const routeTree = rootRoute.addChildren([
   homeRoute,
@@ -59,6 +65,7 @@ const routeTree = rootRoute.addChildren([
   blogRoute,
   blogPostRoute,
   contactRoute,
+  adminRoute,
 ]);
 
 const router = createRouter({ routeTree });

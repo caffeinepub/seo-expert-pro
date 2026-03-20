@@ -1,6 +1,7 @@
 import { MessageCircle, Send, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
+import { useActor } from "../hooks/useActor";
 
 interface Message {
   id: number;
@@ -46,6 +47,7 @@ export default function ChatBot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messageCount = messages.length;
+  const { actor } = useActor();
 
   function openChat() {
     if (!initialized) {
@@ -66,21 +68,25 @@ export default function ChatBot() {
     setIsOpen(false);
   }
 
-  function sendMessage() {
+  async function sendMessage() {
     const text = input.trim();
     if (!text) return;
+    const botReply = getBotReply(text);
     const userMsg: Message = { id: nextId(), text, from: "user" };
-    const botMsg: Message = {
-      id: nextId(),
-      text: getBotReply(text),
-      from: "bot",
-    };
+    const botMsg: Message = { id: nextId(), text: botReply, from: "bot" };
     setMessages((prev) => [...prev, userMsg, botMsg]);
     setInput("");
+
+    // Log to backend silently
+    if (actor) {
+      actor.logChatbotMessage(text, botReply).catch(() => {});
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") sendMessage();
+    if (e.key === "Enter") {
+      void sendMessage();
+    }
   }
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll when message count changes
@@ -166,7 +172,9 @@ export default function ChatBot() {
               />
               <button
                 type="button"
-                onClick={sendMessage}
+                onClick={() => {
+                  void sendMessage();
+                }}
                 disabled={!input.trim()}
                 data-ocid="chatbot.submit_button"
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"

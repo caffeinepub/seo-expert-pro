@@ -8,6 +8,11 @@
 
 import { IDL } from '@icp-sdk/core/candid';
 
+export const UserRole = IDL.Variant({
+  'admin' : IDL.Null,
+  'user' : IDL.Null,
+  'guest' : IDL.Null,
+});
 export const Time = IDL.Int;
 export const BlogPost = IDL.Record({
   'id' : IDL.Nat,
@@ -18,6 +23,13 @@ export const BlogPost = IDL.Record({
   'tags' : IDL.Vec(IDL.Text),
   'readTime' : IDL.Nat,
   'excerpt' : IDL.Text,
+});
+export const UserProfile = IDL.Record({ 'name' : IDL.Text });
+export const ChatbotLog = IDL.Record({
+  'id' : IDL.Nat,
+  'question' : IDL.Text,
+  'answer' : IDL.Text,
+  'timestamp' : Time,
 });
 export const ContactFormEntry = IDL.Record({
   'name' : IDL.Text,
@@ -32,19 +44,32 @@ export const FAQEntry = IDL.Record({
 });
 
 export const idlService = IDL.Service({
+  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'createBlogPost' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(IDL.Text), IDL.Text, IDL.Nat],
       [IDL.Nat],
       [],
     ),
   'getBlogPostById' : IDL.Func([IDL.Nat], [BlogPost], ['query']),
+  'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
+  'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getChatbotLogs' : IDL.Func([], [IDL.Vec(ChatbotLog)], ['query']),
   'getContactSubmissions' : IDL.Func(
       [],
       [IDL.Vec(ContactFormEntry)],
       ['query'],
     ),
   'getFAQs' : IDL.Func([], [IDL.Vec(FAQEntry)], ['query']),
+  'getUserProfile' : IDL.Func(
+      [IDL.Principal],
+      [IDL.Opt(UserProfile)],
+      ['query'],
+    ),
+  'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'listBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
+  'logChatbotMessage' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
   'submitContactForm' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
       [],
@@ -55,6 +80,11 @@ export const idlService = IDL.Service({
 export const idlInitArgs = [];
 
 export const idlFactory = ({ IDL }) => {
+  const UserRole = IDL.Variant({
+    'admin' : IDL.Null,
+    'user' : IDL.Null,
+    'guest' : IDL.Null,
+  });
   const Time = IDL.Int;
   const BlogPost = IDL.Record({
     'id' : IDL.Nat,
@@ -66,6 +96,13 @@ export const idlFactory = ({ IDL }) => {
     'readTime' : IDL.Nat,
     'excerpt' : IDL.Text,
   });
+  const UserProfile = IDL.Record({ 'name' : IDL.Text });
+  const ChatbotLog = IDL.Record({
+    'id' : IDL.Nat,
+    'question' : IDL.Text,
+    'answer' : IDL.Text,
+    'timestamp' : Time,
+  });
   const ContactFormEntry = IDL.Record({
     'name' : IDL.Text,
     'email' : IDL.Text,
@@ -76,19 +113,32 @@ export const idlFactory = ({ IDL }) => {
   const FAQEntry = IDL.Record({ 'question' : IDL.Text, 'answer' : IDL.Text });
   
   return IDL.Service({
+    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'createBlogPost' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(IDL.Text), IDL.Text, IDL.Nat],
         [IDL.Nat],
         [],
       ),
     'getBlogPostById' : IDL.Func([IDL.Nat], [BlogPost], ['query']),
+    'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
+    'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getChatbotLogs' : IDL.Func([], [IDL.Vec(ChatbotLog)], ['query']),
     'getContactSubmissions' : IDL.Func(
         [],
         [IDL.Vec(ContactFormEntry)],
         ['query'],
       ),
     'getFAQs' : IDL.Func([], [IDL.Vec(FAQEntry)], ['query']),
+    'getUserProfile' : IDL.Func(
+        [IDL.Principal],
+        [IDL.Opt(UserProfile)],
+        ['query'],
+      ),
+    'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'listBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
+    'logChatbotMessage' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
     'submitContactForm' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [],

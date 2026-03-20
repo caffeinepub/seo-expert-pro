@@ -148,13 +148,16 @@ export default function Navbar() {
           {/* Logo */}
           <Link
             to="/"
-            className="flex items-center gap-2.5 group"
+            className="flex items-center gap-2.5"
             data-ocid="nav.link"
           >
             <img
               src="/assets/uploads/Screenshot_2026-03-20_183848-removebg-preview-1.png"
               alt="RankPro Logo"
-              className="h-14 w-14 object-contain block rounded-xl"
+              className="h-14 w-14 object-contain block rounded-tl-xl rounded-br-xl"
+              loading="eager"
+              fetchPriority="high"
+              decoding="sync"
             />
             <span className="text-2xl font-bold tracking-tight select-none">
               <span className="text-white">Rank</span>
