@@ -54,7 +54,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { ChatbotLog, ContactFormEntry } from "../backend";
+import type {
+  ChatbotLog,
+  ContactFormEntry,
+  backendInterface,
+} from "../backend";
 import { useActor } from "../hooks/useActor";
 
 type Tab = "overview" | "chatbot" | "contacts" | "analytics";
@@ -1397,8 +1401,7 @@ function Dashboard({
 // ─── AdminPanel (orchestrator) ────────────────────────────────────────────────
 export default function AdminPanel() {
   const { actor: _actor, isFetching } = useActor();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const actor = _actor as any;
+  const actor = _actor as backendInterface | null;
 
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [sessionToken, setSessionToken] = useState<string | null>(null);
@@ -1417,17 +1420,20 @@ export default function AdminPanel() {
       try {
         const stored = sessionStorage.getItem(SESSION_KEY);
         if (!stored) {
-          setAuthState("login");
+          // No stored token — check if admin has been set up
+          const setupDone = await actor.hasAdminSetup();
+          setAuthState(setupDone ? "login" : "setup");
           return;
         }
-        // Accept any non-empty token returned by the backend
-        const valid = stored.length > 0;
+        // Stored token — verify it with the backend
+        const valid = await actor.verifyAdminToken(stored);
         if (valid) {
           setSessionToken(stored);
           setAuthState("dashboard");
         } else {
           sessionStorage.removeItem(SESSION_KEY);
-          setAuthState("login");
+          const setupDone = await actor.hasAdminSetup();
+          setAuthState(setupDone ? "login" : "setup");
         }
       } catch {
         setAuthState("login");
@@ -1450,6 +1456,9 @@ export default function AdminPanel() {
         setContactSubmissions(contacts);
       } catch (err) {
         console.error("loadData error:", err);
+        // Show empty state rather than crashing - data may not exist yet
+        setChatbotLogs([]);
+        setContactSubmissions([]);
       } finally {
         setIsLoadingData(false);
       }
@@ -1470,9 +1479,7 @@ export default function AdminPanel() {
   ): Promise<string | null> {
     if (!actor) return null;
     try {
-      const result = await actor.loginAdmin(email, password);
-      // result is ?Text (Motoko optional), so it's [] | [string] in JS
-      const token = Array.isArray(result) ? result[0] : result;
+      const token = await actor.loginAdmin(email, password);
       if (token) {
         sessionStorage.setItem(SESSION_KEY, token);
         setSessionToken(token);

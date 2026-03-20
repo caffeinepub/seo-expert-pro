@@ -128,19 +128,27 @@ export enum UserRole {
 export interface backendInterface {
     _initializeAccessControlWithSecret(userSecret: string): Promise<void>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    changeAdminPassword(email: string, oldPassword: string, newPassword: string): Promise<boolean>;
     createBlogPost(title: string, excerpt: string, content: string, tags: Array<string>, slug: string, readTime: bigint): Promise<bigint>;
     getBlogPostById(id: bigint): Promise<BlogPost>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getChatbotLogs(): Promise<Array<ChatbotLog>>;
+    getChatbotLogsWithToken(token: string): Promise<Array<ChatbotLog>>;
     getContactSubmissions(): Promise<Array<ContactFormEntry>>;
+    getContactSubmissionsWithToken(token: string): Promise<Array<ContactFormEntry>>;
     getFAQs(): Promise<Array<FAQEntry>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    hasAdminSetup(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     listBlogPosts(): Promise<Array<BlogPost>>;
     logChatbotMessage(question: string, answer: string): Promise<void>;
+    loginAdmin(email: string, password: string): Promise<string | null>;
+    logoutAdmin(token: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setupAdminCredentials(email: string, password: string): Promise<boolean>;
     submitContactForm(name: string, email: string, phone: string, message: string): Promise<void>;
+    verifyAdminToken(token: string): Promise<boolean>;
 }
 import type { UserProfile as _UserProfile, UserRole as _UserRole } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -170,6 +178,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.assignCallerUserRole(arg0, to_candid_UserRole_n1(this._uploadFile, this._downloadFile, arg1));
+            return result;
+        }
+    }
+    async changeAdminPassword(arg0: string, arg1: string, arg2: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.changeAdminPassword(arg0, arg1, arg2);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.changeAdminPassword(arg0, arg1, arg2);
             return result;
         }
     }
@@ -243,6 +265,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async getChatbotLogsWithToken(arg0: string): Promise<Array<ChatbotLog>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getChatbotLogsWithToken(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getChatbotLogsWithToken(arg0);
+            return result;
+        }
+    }
     async getContactSubmissions(): Promise<Array<ContactFormEntry>> {
         if (this.processError) {
             try {
@@ -254,6 +290,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.getContactSubmissions();
+            return result;
+        }
+    }
+    async getContactSubmissionsWithToken(arg0: string): Promise<Array<ContactFormEntry>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getContactSubmissionsWithToken(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getContactSubmissionsWithToken(arg0);
             return result;
         }
     }
@@ -283,6 +333,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getUserProfile(arg0);
             return from_candid_opt_n3(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async hasAdminSetup(): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.hasAdminSetup();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.hasAdminSetup();
+            return result;
         }
     }
     async isCallerAdmin(): Promise<boolean> {
@@ -327,6 +391,34 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async loginAdmin(arg0: string, arg1: string): Promise<string | null> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.loginAdmin(arg0, arg1);
+                return from_candid_opt_n6(this._uploadFile, this._downloadFile, result);
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.loginAdmin(arg0, arg1);
+            return from_candid_opt_n6(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async logoutAdmin(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.logoutAdmin(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.logoutAdmin(arg0);
+            return result;
+        }
+    }
     async saveCallerUserProfile(arg0: UserProfile): Promise<void> {
         if (this.processError) {
             try {
@@ -338,6 +430,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.saveCallerUserProfile(arg0);
+            return result;
+        }
+    }
+    async setupAdminCredentials(arg0: string, arg1: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.setupAdminCredentials(arg0, arg1);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.setupAdminCredentials(arg0, arg1);
             return result;
         }
     }
@@ -355,11 +461,28 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async verifyAdminToken(arg0: string): Promise<boolean> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.verifyAdminToken(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.verifyAdminToken(arg0);
+            return result;
+        }
+    }
 }
 function from_candid_UserRole_n4(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: _UserRole): UserRole {
     return from_candid_variant_n5(_uploadFile, _downloadFile, value);
 }
 function from_candid_opt_n3(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [_UserProfile]): UserProfile | null {
+    return value.length === 0 ? null : value[0];
+}
+function from_candid_opt_n6(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: [] | [string]): string | null {
     return value.length === 0 ? null : value[0];
 }
 function from_candid_variant_n5(_uploadFile: (file: ExternalBlob) => Promise<Uint8Array>, _downloadFile: (file: Uint8Array) => Promise<ExternalBlob>, value: {

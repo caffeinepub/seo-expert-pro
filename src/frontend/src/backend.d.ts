@@ -45,17 +45,25 @@ export enum UserRole {
 }
 export interface backendInterface {
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    changeAdminPassword(email: string, oldPassword: string, newPassword: string): Promise<boolean>;
     createBlogPost(title: string, excerpt: string, content: string, tags: Array<string>, slug: string, readTime: bigint): Promise<bigint>;
     getBlogPostById(id: bigint): Promise<BlogPost>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
     getChatbotLogs(): Promise<Array<ChatbotLog>>;
+    getChatbotLogsWithToken(token: string): Promise<Array<ChatbotLog>>;
     getContactSubmissions(): Promise<Array<ContactFormEntry>>;
+    getContactSubmissionsWithToken(token: string): Promise<Array<ContactFormEntry>>;
     getFAQs(): Promise<Array<FAQEntry>>;
     getUserProfile(user: Principal): Promise<UserProfile | null>;
+    hasAdminSetup(): Promise<boolean>;
     isCallerAdmin(): Promise<boolean>;
     listBlogPosts(): Promise<Array<BlogPost>>;
     logChatbotMessage(question: string, answer: string): Promise<void>;
+    loginAdmin(email: string, password: string): Promise<string | null>;
+    logoutAdmin(token: string): Promise<void>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    setupAdminCredentials(email: string, password: string): Promise<boolean>;
     submitContactForm(name: string, email: string, phone: string, message: string): Promise<void>;
+    verifyAdminToken(token: string): Promise<boolean>;
 }

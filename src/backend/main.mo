@@ -12,7 +12,6 @@ import Principal "mo:core/Principal";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-
 // Specify the data migration function in with-clause
 
 actor {
@@ -98,20 +97,36 @@ actor {
   let chatbotLogs = Map.empty<Nat, ChatbotLog>();
 
   // ─── Email/Password Admin Auth ───────────────────────────────────────────────
-  // Default credentials (reset on each deploy since vars are not stable)
-  var adminEmail : ?Text = ?"amiyadav410@gmail.com";
-  var adminPassword : ?Text = ?"RankPro@2026";
+  // Default credentials (stable vars to persist across upgrades)
+  stable var adminEmail : ?Text = ?"amiyadav410@gmail.com";
+  stable var adminPassword : ?Text = ?"RankPro@2026";
+  stable var adminCredentialsSet : Bool = true; // Track if credentials have been initialized
   let adminSessions = Map.empty<Text, Time.Time>();
 
   // Check if admin credentials have been set up
   public query func hasAdminSetup() : async Bool {
-    adminEmail != null;
+    adminCredentialsSet and adminEmail != null;
   };
 
   // Setup or reset admin credentials
-  public shared func setupAdminCredentials(email : Text, password : Text) : async Bool {
+  // SECURITY: Only allow setup if credentials haven't been set, or require admin authentication
+  public shared ({ caller }) func setupAdminCredentials(email : Text, password : Text) : async Bool {
+    // If credentials are already set, require admin authentication to change them
+    if (adminCredentialsSet) {
+      if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
+        Runtime.trap("Unauthorized: Only admins can reset credentials");
+      };
+    };
+    
     adminEmail := ?email;
     adminPassword := ?password;
+    adminCredentialsSet := true;
+    
+    // Clear all existing sessions when credentials change for security
+    for ((token, _) in adminSessions.entries()) {
+      ignore adminSessions.remove(token);
+    };
+    
     true;
   };
 
@@ -151,6 +166,12 @@ actor {
       case (?storedEmail, ?storedPass) {
         if (storedEmail == email and storedPass == oldPassword) {
           adminPassword := ?newPassword;
+          
+          // Clear all existing sessions when password changes for security
+          for ((token, _) in adminSessions.entries()) {
+            ignore adminSessions.remove(token);
+          };
+          
           true;
         } else {
           false;

@@ -46,6 +46,11 @@ export const FAQEntry = IDL.Record({
 export const idlService = IDL.Service({
   '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'changeAdminPassword' : IDL.Func(
+      [IDL.Text, IDL.Text, IDL.Text],
+      [IDL.Bool],
+      [],
+    ),
   'createBlogPost' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(IDL.Text), IDL.Text, IDL.Nat],
       [IDL.Nat],
@@ -55,8 +60,18 @@ export const idlService = IDL.Service({
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
   'getChatbotLogs' : IDL.Func([], [IDL.Vec(ChatbotLog)], ['query']),
+  'getChatbotLogsWithToken' : IDL.Func(
+      [IDL.Text],
+      [IDL.Vec(ChatbotLog)],
+      ['query'],
+    ),
   'getContactSubmissions' : IDL.Func(
       [],
+      [IDL.Vec(ContactFormEntry)],
+      ['query'],
+    ),
+  'getContactSubmissionsWithToken' : IDL.Func(
+      [IDL.Text],
       [IDL.Vec(ContactFormEntry)],
       ['query'],
     ),
@@ -66,15 +81,20 @@ export const idlService = IDL.Service({
       [IDL.Opt(UserProfile)],
       ['query'],
     ),
+  'hasAdminSetup' : IDL.Func([], [IDL.Bool], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'listBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
   'logChatbotMessage' : IDL.Func([IDL.Text, IDL.Text], [], []),
+  'loginAdmin' : IDL.Func([IDL.Text, IDL.Text], [IDL.Opt(IDL.Text)], []),
+  'logoutAdmin' : IDL.Func([IDL.Text], [], []),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'setupAdminCredentials' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
   'submitContactForm' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
       [],
       [],
     ),
+  'verifyAdminToken' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
 });
 
 export const idlInitArgs = [];
@@ -115,6 +135,11 @@ export const idlFactory = ({ IDL }) => {
   return IDL.Service({
     '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'changeAdminPassword' : IDL.Func(
+        [IDL.Text, IDL.Text, IDL.Text],
+        [IDL.Bool],
+        [],
+      ),
     'createBlogPost' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Vec(IDL.Text), IDL.Text, IDL.Nat],
         [IDL.Nat],
@@ -124,8 +149,18 @@ export const idlFactory = ({ IDL }) => {
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
     'getChatbotLogs' : IDL.Func([], [IDL.Vec(ChatbotLog)], ['query']),
+    'getChatbotLogsWithToken' : IDL.Func(
+        [IDL.Text],
+        [IDL.Vec(ChatbotLog)],
+        ['query'],
+      ),
     'getContactSubmissions' : IDL.Func(
         [],
+        [IDL.Vec(ContactFormEntry)],
+        ['query'],
+      ),
+    'getContactSubmissionsWithToken' : IDL.Func(
+        [IDL.Text],
         [IDL.Vec(ContactFormEntry)],
         ['query'],
       ),
@@ -135,15 +170,20 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Opt(UserProfile)],
         ['query'],
       ),
+    'hasAdminSetup' : IDL.Func([], [IDL.Bool], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'listBlogPosts' : IDL.Func([], [IDL.Vec(BlogPost)], ['query']),
     'logChatbotMessage' : IDL.Func([IDL.Text, IDL.Text], [], []),
+    'loginAdmin' : IDL.Func([IDL.Text, IDL.Text], [IDL.Opt(IDL.Text)], []),
+    'logoutAdmin' : IDL.Func([IDL.Text], [], []),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'setupAdminCredentials' : IDL.Func([IDL.Text, IDL.Text], [IDL.Bool], []),
     'submitContactForm' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text, IDL.Text],
         [],
         [],
       ),
+    'verifyAdminToken' : IDL.Func([IDL.Text], [IDL.Bool], ['query']),
   });
 };
 

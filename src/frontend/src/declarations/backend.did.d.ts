@@ -42,6 +42,7 @@ export type UserRole = { 'admin' : null } |
 export interface _SERVICE {
   '_initializeAccessControlWithSecret' : ActorMethod<[string], undefined>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'changeAdminPassword' : ActorMethod<[string, string, string], boolean>,
   'createBlogPost' : ActorMethod<
     [string, string, string, Array<string>, string, bigint],
     bigint
@@ -50,17 +51,27 @@ export interface _SERVICE {
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
   'getChatbotLogs' : ActorMethod<[], Array<ChatbotLog>>,
+  'getChatbotLogsWithToken' : ActorMethod<[string], Array<ChatbotLog>>,
   'getContactSubmissions' : ActorMethod<[], Array<ContactFormEntry>>,
+  'getContactSubmissionsWithToken' : ActorMethod<
+    [string],
+    Array<ContactFormEntry>
+  >,
   'getFAQs' : ActorMethod<[], Array<FAQEntry>>,
   'getUserProfile' : ActorMethod<[Principal], [] | [UserProfile]>,
+  'hasAdminSetup' : ActorMethod<[], boolean>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'listBlogPosts' : ActorMethod<[], Array<BlogPost>>,
   'logChatbotMessage' : ActorMethod<[string, string], undefined>,
+  'loginAdmin' : ActorMethod<[string, string], [] | [string]>,
+  'logoutAdmin' : ActorMethod<[string], undefined>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'setupAdminCredentials' : ActorMethod<[string, string], boolean>,
   'submitContactForm' : ActorMethod<
     [string, string, string, string],
     undefined
   >,
+  'verifyAdminToken' : ActorMethod<[string], boolean>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];
