@@ -1,10 +1,18 @@
 import { Link } from "@tanstack/react-router";
-import { Facebook, Linkedin, Mail, Phone, Twitter } from "lucide-react";
+import { Facebook, Linkedin, Mail, MapPin, Phone, Twitter } from "lucide-react";
 
 const socialLinks = [
-  { Icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-  { Icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-  { Icon: Facebook, href: "https://facebook.com", label: "Facebook" },
+  { Icon: Twitter, href: "https://twitter.com/rankproseo", label: "Twitter" },
+  {
+    Icon: Linkedin,
+    href: "https://linkedin.com/in/amityadav",
+    label: "LinkedIn",
+  },
+  {
+    Icon: Facebook,
+    href: "https://facebook.com/rankproseo",
+    label: "Facebook",
+  },
 ];
 
 const resources = [
@@ -124,7 +132,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2 text-sm text-[#C7D2E0]">
                 <Phone className="w-4 h-4 text-[#38C98A]" />
-                <span>+1 (555) 123-4567</span>
+                <span>+977 9868730337</span>
+              </li>
+              <li className="flex items-center gap-2 text-sm text-[#C7D2E0]">
+                <MapPin className="w-4 h-4 text-[#38C98A]" />
+                <span>Baneshwor, Kathmandu (Remote Worldwide)</span>
               </li>
             </ul>
             <div className="flex gap-3 mt-4">
@@ -132,7 +144,10 @@ export default function Footer() {
                 <a
                   key={label}
                   href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-[#38C98A] transition-colors"
+                  aria-label={label}
                 >
                   <Icon className="w-4 h-4" />
                 </a>

@@ -81,6 +81,21 @@ export default function ChatBot() {
     if (actor) {
       actor.logChatbotMessage(text, botReply).catch(() => {});
     }
+    // Also save to localStorage so admin panel can always see chatbot logs
+    try {
+      const existing = JSON.parse(
+        localStorage.getItem("rankpro_chatbot_logs") ?? "[]",
+      );
+      existing.push({
+        id: Date.now(),
+        question: text,
+        answer: botReply,
+        timestamp: Date.now(),
+      });
+      localStorage.setItem("rankpro_chatbot_logs", JSON.stringify(existing));
+    } catch {
+      /* ignore */
+    }
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {

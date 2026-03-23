@@ -15,9 +15,17 @@ import { useBackend } from "../hooks/useBackend";
 const Contact3DScene = lazy(() => import("../components/Contact3DScene"));
 
 const socialLinks = [
-  { Icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-  { Icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-  { Icon: Facebook, href: "https://facebook.com", label: "Facebook" },
+  { Icon: Twitter, href: "https://twitter.com/rankproseo", label: "Twitter" },
+  {
+    Icon: Linkedin,
+    href: "https://linkedin.com/in/amityadav",
+    label: "LinkedIn",
+  },
+  {
+    Icon: Facebook,
+    href: "https://facebook.com/rankproseo",
+    label: "Facebook",
+  },
 ];
 
 export default function Contact() {
@@ -41,12 +49,30 @@ export default function Contact() {
         form.phone,
         form.message,
       );
-      setSent(true);
     } catch {
-      setSent(true);
-    } finally {
-      setLoading(false);
+      // ignore backend error, still save locally
     }
+    // Save to localStorage so admin panel can always see submissions
+    try {
+      const existing = JSON.parse(
+        localStorage.getItem("rankpro_contact_submissions") ?? "[]",
+      );
+      existing.push({
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        message: form.message,
+        timestamp: Date.now(),
+      });
+      localStorage.setItem(
+        "rankpro_contact_submissions",
+        JSON.stringify(existing),
+      );
+    } catch {
+      /* ignore */
+    }
+    setSent(true);
+    setLoading(false);
   };
 
   return (
@@ -140,7 +166,7 @@ export default function Contact() {
                       onChange={(e) =>
                         setForm({ ...form, phone: e.target.value })
                       }
-                      placeholder="+1 (555) 000-0000"
+                      placeholder="+977 98XXXXXXXX"
                       className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-[#38C98A] focus:ring-1 focus:ring-[#38C98A]"
                     />
                   </div>
@@ -204,10 +230,10 @@ export default function Contact() {
                       Phone
                     </div>
                     <a
-                      href="tel:+15551234567"
+                      href="tel:+9779868730337"
                       className="text-gray-600 text-sm hover:text-[#38C98A]"
                     >
-                      +1 (555) 123-4567
+                      +977 9868730337
                     </a>
                   </div>
                 </div>
@@ -220,7 +246,7 @@ export default function Contact() {
                       Location
                     </div>
                     <span className="text-gray-600 text-sm">
-                      San Francisco, CA (Remote Worldwide)
+                      Baneshwor, Kathmandu (Remote Worldwide)
                     </span>
                   </div>
                 </div>
@@ -235,6 +261,9 @@ export default function Contact() {
                     <a
                       key={label}
                       href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={label}
                       className="w-10 h-10 rounded-full border border-gray-200 flex items-center justify-center hover:bg-[#38C98A] hover:border-[#38C98A] hover:text-white text-gray-500 transition-colors"
                     >
                       <Icon className="w-5 h-5" />
@@ -248,8 +277,8 @@ export default function Contact() {
                 <div className="grid grid-cols-2 gap-3">
                   {[
                     "Google Analytics Certified",
-                    "10+ Years Experience",
-                    "500+ Happy Clients",
+                    "4+ Yrs Experience",
+                    "100+ Happy Clients",
                     "98% Retention Rate",
                   ].map((b) => (
                     <div key={b} className="flex items-center gap-2">

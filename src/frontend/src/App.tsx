@@ -4,57 +4,104 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
+import { Suspense, lazy } from "react";
 import ChatBot from "./components/ChatBot";
-import About from "./pages/About";
-import AdminPanel from "./pages/AdminPanel";
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import CaseStudies from "./pages/CaseStudies";
-import Contact from "./pages/Contact";
-import Home from "./pages/Home";
-import Services from "./pages/Services";
+
+// Lazy-load every page so only the current page's JS is fetched on first visit
+const Home = lazy(() => import("./pages/Home"));
+const About = lazy(() => import("./pages/About"));
+const Services = lazy(() => import("./pages/Services"));
+const CaseStudies = lazy(() => import("./pages/CaseStudies"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Contact = lazy(() => import("./pages/Contact"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+
+// Minimal full-screen loading indicator shown while a page chunk is fetched
+function PageLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-[#0a1628]">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 rounded-full border-4 border-[#38C98A]/30 border-t-[#38C98A] animate-spin" />
+        <span className="text-white/60 text-sm font-medium">Loading…</span>
+      </div>
+    </div>
+  );
+}
 
 const rootRoute = createRootRoute();
 
 const homeRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: Home,
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <Home />
+    </Suspense>
+  ),
 });
 const aboutRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/about",
-  component: About,
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <About />
+    </Suspense>
+  ),
 });
 const servicesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/services",
-  component: Services,
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <Services />
+    </Suspense>
+  ),
 });
 const caseStudiesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/case-studies",
-  component: CaseStudies,
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <CaseStudies />
+    </Suspense>
+  ),
 });
 const blogRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/blog",
-  component: Blog,
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <Blog />
+    </Suspense>
+  ),
 });
 const blogPostRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/blog/$id",
-  component: BlogPost,
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <BlogPost />
+    </Suspense>
+  ),
 });
 const contactRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/contact",
-  component: Contact,
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <Contact />
+    </Suspense>
+  ),
 });
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin",
-  component: AdminPanel,
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <AdminPanel />
+    </Suspense>
+  ),
 });
 
 const routeTree = rootRoute.addChildren([

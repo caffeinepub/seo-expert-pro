@@ -42,6 +42,10 @@ function NavDropdown({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const routerStateDropdown = useRouterState();
+  const isActive =
+    routerStateDropdown.location.pathname === to ||
+    routerStateDropdown.location.pathname.startsWith(`${to}/`);
 
   const handleMouseEnter = () => {
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -64,7 +68,9 @@ function NavDropdown({
         data-ocid="nav.link"
         className="relative px-3 py-2 text-sm font-medium group flex items-center gap-1"
       >
-        <span className="transition-colors duration-200 text-white/70 group-hover:text-white">
+        <span
+          className={`transition-colors duration-200 ${isActive ? "text-white font-semibold" : "text-white/70"} group-hover:text-white`}
+        >
           {label}
         </span>
         <ChevronDown
@@ -74,7 +80,7 @@ function NavDropdown({
         />
         <span
           className={`absolute bottom-0 left-3 right-3 h-[2px] rounded-full bg-[#38C98A] transition-all duration-300 origin-left ${
-            open
+            isActive || open
               ? "scale-x-100 opacity-100"
               : "scale-x-0 opacity-0 group-hover:scale-x-100 group-hover:opacity-60"
           }`}
@@ -145,23 +151,24 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-[72px]">
-          {/* Logo */}
+          {/* Logo — completely static, no hover movement */}
           <Link
             to="/"
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2.5 no-underline"
             data-ocid="nav.link"
           >
             <img
-              src="/assets/uploads/Screenshot_2026-03-20_183848-removebg-preview-1.png"
+              src="/assets/generated/rankpro-logo.png"
               alt="RankPro Logo"
-              className="h-14 w-14 object-contain block rounded-tl-xl rounded-br-xl"
+              className="h-14 w-auto object-contain block rounded-tl-xl rounded-bl-xl rounded-br-xl"
               loading="eager"
               fetchPriority="high"
               decoding="sync"
             />
-            <span className="text-2xl font-bold tracking-tight select-none">
+            <span className="text-2xl font-bold tracking-tight select-none pointer-events-none">
               <span className="text-white">Rank</span>
               <span className="text-[#38C98A]">Pro</span>
+              <span className="text-[#7DD3FC]"> SEO</span>
             </span>
           </Link>
 

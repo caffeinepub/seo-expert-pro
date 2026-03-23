@@ -256,6 +256,30 @@ const samplePosts = [
     tags: ["Local SEO"],
     readTime: 6,
   },
+  {
+    title: "Local SEO Mastery: Rank #1 in Your City in 2026",
+    excerpt:
+      "A step-by-step guide to dominating local search results, Google Business Profile optimization, building citations, and earning 5-star reviews that convert browsers into buyers.",
+    tags: ["Local SEO", "Best Practices"],
+    readTime: 9,
+    slug: "local-seo-mastery-rank-1-in-your-city-2026",
+  },
+  {
+    title: "SEO Analytics: How to Measure What Actually Matters",
+    excerpt:
+      "Stop tracking vanity metrics. This guide shows you which SEO KPIs drive real business decisions, how to set up proper GA4 reporting, and how to attribute revenue to organic search.",
+    tags: ["Technical SEO", "Best Practices"],
+    readTime: 8,
+    slug: "seo-analytics-measure-what-matters",
+  },
+  {
+    title: "Content Strategy for SEO: The Complete 2026 Framework",
+    excerpt:
+      "Build a content strategy that systematically drives organic growth. Topical authority maps, keyword research frameworks, content formats that earn links, and a quarterly refresh system.",
+    tags: ["Keyword Research", "Best Practices"],
+    readTime: 11,
+    slug: "content-strategy-seo-complete-framework-2026",
+  },
 ];
 
 const TAG_COLORS: Record<string, { bg: string; text: string; glow: string }> = {
@@ -726,6 +750,108 @@ function BlogCard({ post, index }: { post: BlogPost; index: number }) {
   );
 }
 
+function BlogGridParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: false,
+    });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.setClearColor(0x000000, 0);
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(
+      60,
+      canvas.clientWidth / canvas.clientHeight,
+      0.1,
+      100,
+    );
+    camera.position.z = 6;
+
+    const shapes: THREE.Mesh[] = [];
+    const colors = [0x38c98a, 0x00d4ff, 0x7ec8ff, 0x5be8a8];
+    for (let i = 0; i < 12; i++) {
+      const geo = new THREE.IcosahedronGeometry(0.15 + Math.random() * 0.1, 0);
+      const mat = new THREE.MeshBasicMaterial({
+        color: colors[i % colors.length],
+        wireframe: true,
+        transparent: true,
+        opacity: 0.25 + Math.random() * 0.2,
+      });
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(
+        (Math.random() - 0.5) * 20,
+        (Math.random() - 0.5) * 10,
+        (Math.random() - 0.5) * 4 - 2,
+      );
+      scene.add(mesh);
+      shapes.push(mesh);
+    }
+
+    const count = 180;
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count * 3; i++) pos[i] = (Math.random() - 0.5) * 22;
+    const pGeo = new THREE.BufferGeometry();
+    pGeo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+    const pMat = new THREE.PointsMaterial({
+      color: 0x38c98a,
+      size: 0.04,
+      transparent: true,
+      opacity: 0.4,
+    });
+    const particles = new THREE.Points(pGeo, pMat);
+    scene.add(particles);
+
+    let animId: number;
+    const speeds = shapes.map(() => ({
+      rx: (Math.random() - 0.5) * 0.01,
+      ry: (Math.random() - 0.5) * 0.012,
+    }));
+    const origins = shapes.map((m) => m.position.y);
+    let t = 0;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      t += 0.008;
+      shapes.forEach((m, i) => {
+        m.rotation.x += speeds[i].rx;
+        m.rotation.y += speeds[i].ry;
+        m.position.y = origins[i] + Math.sin(t + i) * 0.3;
+      });
+      particles.rotation.y += 0.0004;
+      renderer.render(scene, camera);
+    };
+    animate();
+    const handleResize = () => {
+      if (!canvas) return;
+      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+      camera.aspect = canvas.clientWidth / canvas.clientHeight;
+      camera.updateProjectionMatrix();
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", handleResize);
+      renderer.dispose();
+    };
+  }, []);
+  return (
+    <canvas
+      ref={canvasRef}
+      style={{
+        position: "absolute",
+        inset: 0,
+        width: "100%",
+        height: "100%",
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
 export default function Blog() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -765,6 +891,7 @@ export default function Blog() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#071c2e" }}>
+      <style>{}</style>
       <Navbar />
 
       {/* Hero */}
@@ -860,13 +987,273 @@ export default function Blog() {
             Actionable SEO expertise—from technical deep-dives to content
             strategy—written by practitioners who've ranked hundreds of sites.
           </p>
+          {/* Scroll indicator */}
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: "48px",
+            }}
+          >
+            <button
+              type="button"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "6px",
+                animation: "blogScrollBounce 2s ease-in-out infinite",
+                cursor: "pointer",
+                opacity: 0.7,
+                background: "none",
+                border: "none",
+                padding: 0,
+              }}
+              onClick={() => {
+                document
+                  .getElementById("blog-content")
+                  ?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              <span
+                style={{
+                  color: "rgba(199,210,224,0.7)",
+                  fontSize: "12px",
+                  letterSpacing: "0.08em",
+                  fontWeight: 600,
+                }}
+              >
+                SCROLL
+              </span>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                role="img"
+                aria-label="Scroll down"
+                style={{ color: "#38C98A" }}
+              >
+                <title>Scroll down</title>
+                <path
+                  d="M12 5v14M5 12l7 7 7-7"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* SEO Tips & Resources Banner */}
+      <section style={{ background: "#0B2A43", padding: "48px 0" }}>
+        <div
+          style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 24px" }}
+        >
+          <div
+            style={{
+              background:
+                "linear-gradient(135deg, #0d3352 0%, #0a2440 50%, #072035 100%)",
+              border: "1px solid rgba(56,201,138,0.25)",
+              borderRadius: "20px",
+              padding: "40px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                gap: "40px",
+                alignItems: "center",
+              }}
+            >
+              <div style={{ flex: "1", minWidth: "280px" }}>
+                <div
+                  style={{
+                    display: "inline-block",
+                    background: "rgba(56,201,138,0.15)",
+                    color: "#38C98A",
+                    fontSize: "12px",
+                    fontWeight: "600",
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    padding: "4px 12px",
+                    borderRadius: "20px",
+                    border: "1px solid rgba(56,201,138,0.3)",
+                    marginBottom: "16px",
+                  }}
+                >
+                  SEO Learning Hub
+                </div>
+                <h2
+                  style={{
+                    color: "#fff",
+                    fontSize: "clamp(22px, 3vw, 30px)",
+                    fontWeight: "800",
+                    marginBottom: "12px",
+                    lineHeight: "1.2",
+                  }}
+                >
+                  Master SEO with Expert Insights
+                </h2>
+                <p
+                  style={{
+                    color: "#C7D2E0",
+                    fontSize: "15px",
+                    lineHeight: "1.7",
+                    marginBottom: "0",
+                    maxWidth: "480px",
+                  }}
+                >
+                  Dive into our expert articles to learn proven strategies that
+                  drive organic traffic, improve rankings, and grow your
+                  business online.
+                </p>
+              </div>
+              <div style={{ flex: "1", minWidth: "280px" }}>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "1fr 1fr",
+                    gap: "16px",
+                  }}
+                >
+                  {[
+                    {
+                      icon: "🔍",
+                      title: "Keyword Research",
+                      desc: "Find terms your customers actually search",
+                    },
+                    {
+                      icon: "📄",
+                      title: "On-Page Optimization",
+                      desc: "Maximize every page's ranking potential",
+                    },
+                    {
+                      icon: "🔗",
+                      title: "Link Building",
+                      desc: "Earn authority through quality backlinks",
+                    },
+                    {
+                      icon: "⚙️",
+                      title: "Technical SEO",
+                      desc: "Fix crawlability, speed & indexing issues",
+                    },
+                  ].map((tip) => (
+                    <div
+                      key={tip.title}
+                      style={{
+                        background: "rgba(255,255,255,0.04)",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                        borderRadius: "12px",
+                        padding: "16px",
+                      }}
+                    >
+                      <div style={{ fontSize: "24px", marginBottom: "8px" }}>
+                        {tip.icon}
+                      </div>
+                      <div
+                        style={{
+                          color: "#38C98A",
+                          fontWeight: "700",
+                          fontSize: "13px",
+                          marginBottom: "4px",
+                        }}
+                      >
+                        {tip.title}
+                      </div>
+                      <div
+                        style={{
+                          color: "#C7D2E0",
+                          fontSize: "12px",
+                          lineHeight: "1.5",
+                        }}
+                      >
+                        {tip.desc}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Blog Content */}
-      <section style={{ padding: "60px 0 80px" }}>
+      <section
+        id="blog-content"
+        style={{
+          padding: "60px 0 80px",
+          position: "relative",
+          overflow: "hidden",
+        }}
+      >
+        <BlogGridParticles />
+        {/* Animated section header */}
         <div
-          style={{ maxWidth: "1200px", margin: "0 auto", padding: "0 24px" }}
+          style={{
+            textAlign: "center",
+            padding: "0 24px 32px",
+            position: "relative",
+            zIndex: 1,
+          }}
+        >
+          <div
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "12px",
+              background: "rgba(56,201,138,0.08)",
+              border: "1px solid rgba(56,201,138,0.25)",
+              borderRadius: "99px",
+              padding: "8px 20px",
+              marginBottom: "16px",
+              animation: "pulse-glow 2.5s ease-in-out infinite",
+            }}
+          >
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#38C98A",
+                display: "inline-block",
+                animation: "blink 1.2s ease-in-out infinite",
+              }}
+            />
+            <span
+              style={{
+                color: "#38C98A",
+                fontSize: 13,
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+              }}
+            >
+              ALL ARTICLES
+            </span>
+          </div>
+          <div
+            style={{
+              width: 60,
+              height: 2,
+              background:
+                "linear-gradient(90deg, transparent, #38C98A, transparent)",
+              margin: "0 auto",
+            }}
+          />
+        </div>
+        <div
+          style={{
+            maxWidth: "1200px",
+            margin: "0 auto",
+            padding: "0 24px",
+            position: "relative",
+            zIndex: 1,
+          }}
         >
           {loading ? (
             <div
@@ -1197,6 +1584,23 @@ export default function Blog() {
       <style>{`
         @media (max-width: 768px) {
           .featured-grid { grid-template-columns: 1fr !important; }
+        }
+        @keyframes blogScrollBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(8px); }
+        }
+        @keyframes pulse-glow {
+          0%, 100% { box-shadow: 0 0 0 rgba(56,201,138,0); }
+          50% { box-shadow: 0 0 18px rgba(56,201,138,0.25); }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+        @keyframes float-up {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+          100% { transform: translateY(0px); }
         }
       `}</style>
     </div>

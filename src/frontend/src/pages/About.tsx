@@ -48,8 +48,8 @@ const timeline = [
   },
   {
     year: "2026",
-    title: "500+ Clients Served",
-    desc: "Now serving over 500 businesses globally, with a 98% client retention rate and hundreds of #1 rankings.",
+    title: "100+ Clients Served",
+    desc: "Now serving over 100 businesses globally, with a 98% client retention rate and hundreds of #1 rankings.",
   },
 ];
 
@@ -95,7 +95,7 @@ export default function About() {
             SEO Expert & Founder of RankPro SEO
           </p>
           <p className="text-[#C7D2E0] text-lg max-w-2xl mx-auto leading-relaxed">
-            With 10+ years of hands-on SEO experience, I've helped hundreds of
+            With 4+ years of hands-on SEO experience, I've helped hundreds of
             businesses transform their online visibility and turn search engines
             into their #1 growth channel.
           </p>
@@ -120,7 +120,7 @@ export default function About() {
                 creating experiences that users and search engines love.
               </p>
               <p className="text-gray-600 leading-relaxed mb-4">
-                Over a decade, I've worked with e-commerce brands, SaaS
+                Over 4+ years, I've worked with e-commerce brands, SaaS
                 companies, local businesses, and everything in between. Each
                 client taught me something new about how search really works.
               </p>
@@ -132,8 +132,8 @@ export default function About() {
             </div>
             <div className="grid grid-cols-2 gap-4">
               {[
-                { val: "10+", label: "Years Experience" },
-                { val: "500+", label: "Clients Helped" },
+                { val: "4+", label: "Yrs Experience" },
+                { val: "100+", label: "Clients Helped" },
                 { val: "1M+", label: "Keywords Ranked" },
                 { val: "98%", label: "Retention Rate" },
               ].map((s) => (

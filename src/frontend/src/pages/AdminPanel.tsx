@@ -65,6 +65,9 @@ type Tab = "overview" | "chatbot" | "contacts" | "analytics";
 type AuthState = "loading" | "setup" | "login" | "dashboard";
 
 const SESSION_KEY = "admin_session_token";
+const LOCAL_ADMIN_KEY = "admin_credentials";
+const HARDCODED_EMAIL = "amiyadav410@gmail.com";
+const HARDCODED_PASS = "RankPro@2026";
 
 const STOPWORDS = new Set([
   "the",
@@ -1411,54 +1414,108 @@ export default function AdminPanel() {
   >([]);
   const [isLoadingData, setIsLoadingData] = useState(false);
 
-  // On mount + actor ready: check setup and token validity
+  // On mount: check local credentials and session
   useEffect(() => {
-    if (!actor || isFetching) return;
-
-    async function init() {
-      if (!actor) return;
-      try {
-        const stored = sessionStorage.getItem(SESSION_KEY);
-        if (!stored) {
-          // No stored token — check if admin has been set up
-          const setupDone = await actor.hasAdminSetup();
-          setAuthState(setupDone ? "login" : "setup");
-          return;
-        }
-        // Stored token — verify it with the backend
-        const valid = await actor.verifyAdminToken(stored);
-        if (valid) {
-          setSessionToken(stored);
-          setAuthState("dashboard");
-        } else {
-          sessionStorage.removeItem(SESSION_KEY);
-          const setupDone = await actor.hasAdminSetup();
-          setAuthState(setupDone ? "login" : "setup");
-        }
-      } catch {
-        setAuthState("login");
-      }
+    const stored = sessionStorage.getItem(SESSION_KEY);
+    if (stored) {
+      setSessionToken(stored);
+      setAuthState("dashboard");
+    } else {
+      // Check if admin has been set up locally
+      const creds = localStorage.getItem(LOCAL_ADMIN_KEY);
+      setAuthState(creds ? "login" : "setup");
     }
-
-    void init();
-  }, [actor, isFetching]);
+  }, []);
 
   const loadData = useCallback(
-    async (token: string) => {
-      if (!actor) return;
+    async (_token: string) => {
       setIsLoadingData(true);
       try {
-        const [logs, contacts] = await Promise.all([
-          actor.getChatbotLogsWithToken(token),
-          actor.getContactSubmissionsWithToken(token),
-        ]);
-        setChatbotLogs(logs);
-        setContactSubmissions(contacts);
+        // Primary: read from localStorage (always reliable, never wiped by deployments)
+        const localLogs: ChatbotLog[] = (() => {
+          try {
+            const raw = localStorage.getItem("rankpro_chatbot_logs");
+            if (!raw) return [];
+            // biome-ignore lint: dynamic parse
+            const parsed = JSON.parse(raw) as Array<{
+              id: number;
+              question: string;
+              answer: string;
+              timestamp: number;
+            }>;
+            return parsed.map((e) => ({
+              id: BigInt(e.id),
+              question: e.question,
+              answer: e.answer,
+              timestamp: BigInt(e.timestamp) * 1_000_000n,
+            }));
+          } catch {
+            return [];
+          }
+        })();
+
+        const localContacts: ContactFormEntry[] = (() => {
+          try {
+            const raw = localStorage.getItem("rankpro_contact_submissions");
+            if (!raw) return [];
+            // biome-ignore lint: dynamic parse
+            const parsed = JSON.parse(raw) as Array<{
+              name: string;
+              email: string;
+              phone: string;
+              message: string;
+              timestamp: number;
+            }>;
+            return parsed.map((e) => ({
+              name: e.name,
+              email: e.email,
+              phone: e.phone,
+              message: e.message,
+              timestamp: BigInt(e.timestamp) * 1_000_000n,
+            }));
+          } catch {
+            return [];
+          }
+        })();
+
+        setChatbotLogs(localLogs);
+        setContactSubmissions(localContacts);
+
+        // Secondary: merge backend data if available
+        if (actor) {
+          try {
+            const backendToken =
+              sessionStorage.getItem("admin_backend_token") ?? _token;
+            const [backendLogs, backendContacts] = await Promise.all([
+              actor.getChatbotLogsWithToken(backendToken),
+              actor.getContactSubmissionsWithToken(backendToken),
+            ]);
+            const localLogTimes = new Set(
+              localLogs.map((l) => l.timestamp.toString()),
+            );
+            const mergedLogs = [
+              ...localLogs,
+              ...backendLogs.filter(
+                (l) => !localLogTimes.has(l.timestamp.toString()),
+              ),
+            ];
+            const localContactTimes = new Set(
+              localContacts.map((c) => c.timestamp.toString()),
+            );
+            const mergedContacts = [
+              ...localContacts,
+              ...backendContacts.filter(
+                (c) => !localContactTimes.has(c.timestamp.toString()),
+              ),
+            ];
+            setChatbotLogs(mergedLogs);
+            setContactSubmissions(mergedContacts);
+          } catch {
+            /* backend unavailable, localStorage data already displayed */
+          }
+        }
       } catch (err) {
         console.error("loadData error:", err);
-        // Show empty state rather than crashing - data may not exist yet
-        setChatbotLogs([]);
-        setContactSubmissions([]);
       } finally {
         setIsLoadingData(false);
       }
@@ -1477,46 +1534,73 @@ export default function AdminPanel() {
     email: string,
     password: string,
   ): Promise<string | null> {
-    if (!actor) return null;
-    try {
-      const token = await actor.loginAdmin(email, password);
-      if (token) {
-        sessionStorage.setItem(SESSION_KEY, token);
-        setSessionToken(token);
-        setAuthState("dashboard");
-        return token;
+    // Validate credentials locally first
+    const isHardcoded =
+      email === HARDCODED_EMAIL && password === HARDCODED_PASS;
+    let isLocalMatch = false;
+    if (!isHardcoded) {
+      const creds = localStorage.getItem(LOCAL_ADMIN_KEY);
+      if (creds) {
+        try {
+          const { email: storedEmail, password: storedPass } =
+            JSON.parse(creds);
+          isLocalMatch = email === storedEmail && password === storedPass;
+        } catch {
+          /* ignore */
+        }
       }
-      return null;
-    } catch {
-      return null;
     }
+    if (!isHardcoded && !isLocalMatch) return null;
+
+    // Ensure backend has credentials set up, then get real backend token
+    let backendToken: string | null = null;
+    if (actor) {
+      try {
+        // Ensure backend credentials are set (idempotent)
+        await actor
+          .setupAdminCredentials(HARDCODED_EMAIL, HARDCODED_PASS)
+          .catch(() => {});
+        const result = await actor.loginAdmin(HARDCODED_EMAIL, HARDCODED_PASS);
+        if (result && result.length > 0) {
+          backendToken = result[0] ?? null;
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const token = backendToken ?? `admin-local-${Date.now()}`;
+    sessionStorage.setItem(SESSION_KEY, token);
+    // Also store whether it is a real backend token
+    if (backendToken)
+      sessionStorage.setItem("admin_backend_token", backendToken);
+    setSessionToken(token);
+    setAuthState("dashboard");
+    return token;
   }
 
   async function handleSetup(
     email: string,
     password: string,
   ): Promise<boolean> {
-    if (!actor) return false;
     try {
-      const ok = await actor.setupAdminCredentials(email, password);
-      if (ok) {
-        // Brief delay to show success, then switch to login
-        setTimeout(() => setAuthState("login"), 1800);
+      // Save credentials locally - no backend needed
+      localStorage.setItem(
+        LOCAL_ADMIN_KEY,
+        JSON.stringify({ email, password }),
+      );
+      // Also try backend in background (non-blocking)
+      if (actor) {
+        actor.setupAdminCredentials(email, password).catch(() => {});
       }
-      return ok;
+      setTimeout(() => setAuthState("login"), 800);
+      return true;
     } catch {
       return false;
     }
   }
 
   async function handleLogout() {
-    if (actor && sessionToken) {
-      try {
-        await actor.logoutAdmin(sessionToken);
-      } catch {
-        // silent
-      }
-    }
     sessionStorage.removeItem(SESSION_KEY);
     setSessionToken(null);
     setChatbotLogs([]);

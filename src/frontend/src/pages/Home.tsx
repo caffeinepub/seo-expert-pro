@@ -13,10 +13,10 @@ import {
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
 import type { BlogPost, FAQEntry } from "../backend";
 import Footer from "../components/Footer";
+import Hero3DScene from "../components/Hero3DScene";
 import Navbar from "../components/Navbar";
 import { useBackend } from "../hooks/useBackend";
 
-const Hero3DScene = lazy(() => import("../components/Hero3DScene"));
 const StatsParticles = lazy(() => import("../components/StatsParticles"));
 const FloatingGeoBg = lazy(() => import("../components/FloatingGeoBg"));
 const SectionParticlesBg = lazy(
@@ -132,19 +132,6 @@ const marqueeItems = [
   { id: "m15", text: "Keyword Research" },
 ];
 
-const barHeights = [
-  { key: "b0", h: 30 },
-  { key: "b1", h: 45 },
-  { key: "b2", h: 40 },
-  { key: "b3", h: 60 },
-  { key: "b4", h: 55 },
-  { key: "b5", h: 80 },
-  { key: "b6", h: 75 },
-  { key: "b7", h: 95 },
-  { key: "b8", h: 88 },
-  { key: "b9", h: 100 },
-];
-
 const defaultFaqs = [
   {
     question: "What is SEO and why does it matter?",
@@ -258,18 +245,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Right: 3D scene (desktop) / static card (mobile) */}
+            {/* Right: 3D scene — eagerly imported, renders immediately */}
             <div className="flex items-center justify-center">
               <div
-                className="relative w-full max-w-lg hidden lg:block"
-                style={{ height: "420px" }}
+                className="relative w-full max-w-lg"
+                style={{ height: "clamp(280px, 45vw, 420px)" }}
               >
-                <Suspense fallback={<HeroFallbackCard />}>
-                  <Hero3DScene />
-                </Suspense>
-              </div>
-              <div className="lg:hidden w-full max-w-md">
-                <HeroFallbackCard />
+                <Hero3DScene />
               </div>
             </div>
           </div>
@@ -278,7 +260,7 @@ export default function Home() {
 
       {/* ── Stats ── */}
       <section className="bg-[#F7F9FC] py-10 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none hidden md:block">
+        <div className="absolute inset-0 pointer-events-none">
           <Suspense fallback={null}>
             <StatsParticles />
           </Suspense>
@@ -286,8 +268,8 @@ export default function Home() {
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { val: "500+", label: "Clients Served" },
-              { val: "10+", label: "Years Experience" },
+              { val: "100+", label: "Clients Served" },
+              { val: "4+", label: "Yrs Experience" },
               { val: "98%", label: "Client Retention" },
               { val: "#1", label: "Rankings Delivered" },
             ].map((s) => (
@@ -605,7 +587,7 @@ export default function Home() {
             Ready to Dominate Search Results?
           </h2>
           <p className="text-white/90 mb-8">
-            Join 500+ businesses that trust RankPro SEO to grow their organic
+            Join 100+ businesses that trust RankPro SEO to grow their organic
             presence.
           </p>
           <Link
@@ -618,44 +600,6 @@ export default function Home() {
       </section>
 
       <Footer />
-    </div>
-  );
-}
-
-// ── Hero fallback card ──
-function HeroFallbackCard() {
-  return (
-    <div className="bg-[#0B2A43] rounded-2xl p-8 shadow-2xl">
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        {[
-          { label: "Organic Traffic", val: "+312%", color: "text-[#38C98A]" },
-          { label: "Keyword Rankings", val: "#1 Pos", color: "text-[#38C98A]" },
-          { label: "Leads Generated", val: "4,820", color: "text-white" },
-          { label: "ROI Delivered", val: "890%", color: "text-white" },
-        ].map((s) => (
-          <div key={s.label} className="bg-white/10 rounded-xl p-4">
-            <div className={`text-2xl font-bold ${s.color}`}>{s.val}</div>
-            <div className="text-[#C7D2E0] text-xs mt-1">{s.label}</div>
-          </div>
-        ))}
-      </div>
-      <div className="bg-[#38C98A]/20 rounded-xl p-4">
-        <div className="flex items-center gap-2 mb-2">
-          <TrendingUp className="w-5 h-5 text-[#38C98A]" />
-          <span className="text-white font-semibold text-sm">
-            Traffic Growth Trend
-          </span>
-        </div>
-        <div className="flex items-end gap-1 h-12">
-          {barHeights.map(({ key, h }) => (
-            <div
-              key={key}
-              className="flex-1 bg-[#38C98A] rounded-sm opacity-80"
-              style={{ height: `${h}%` }}
-            />
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { Html } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { Suspense, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import * as THREE from "three";
 
 const statBadges = [
@@ -161,7 +161,7 @@ function SceneContent({ mouse }: { mouse: { x: number; y: number } }) {
 
       {/* Stat HTML badges */}
       {statBadges.map((s) => (
-        <Html key={s.label} position={s.pos} center>
+        <Html key={s.label} position={s.pos} center zIndexRange={[1, 1]}>
           <div
             style={{
               background: "rgba(255,255,255,0.95)",
@@ -227,13 +227,12 @@ export default function Hero3DScene() {
     >
       <Canvas
         camera={{ position: [0, 0, 6.5], fov: 48 }}
-        gl={{ alpha: true, antialias: true }}
-        dpr={[1, 2]}
+        gl={{ alpha: true, antialias: false }}
+        dpr={[1, 1.5]}
+        flat
         style={{ background: "transparent", width: "100%", height: "100%" }}
       >
-        <Suspense fallback={null}>
-          <SceneContent mouse={mouse} />
-        </Suspense>
+        <SceneContent mouse={mouse} />
       </Canvas>
     </div>
   );
