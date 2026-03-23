@@ -1,5 +1,9 @@
 import { Link } from "@tanstack/react-router";
-import { ArrowUp, TrendingUp } from "lucide-react";
+import { ArrowRight, ArrowUp, TrendingUp } from "lucide-react";
+
+function toSlug(str: string): string {
+  return str.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+}
 import { Suspense, lazy } from "react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
@@ -77,6 +81,36 @@ const cases = [
     improvement: "+647% Leads",
     duration: "5 months",
   },
+  {
+    industry: "SaaS Startup",
+    challenge:
+      "Post-launch SaaS with zero organic visibility and a CAC of $480 from paid channels alone. Needed to build an organic acquisition engine to scale without burning ad budget.",
+    solution:
+      "Keyword gap analysis against 8 competitors, in-depth comparison content strategy, and link acquisition from SaaS review sites and industry blogs.",
+    before: { traffic: "620/mo", rankings: "Not in top 50", leads: "9/mo" },
+    after: {
+      traffic: "8,950/mo",
+      rankings: "Top 10 for 180+ keywords",
+      leads: "34/mo",
+    },
+    improvement: "+280% Organic Leads",
+    duration: "8 months",
+  },
+  {
+    industry: "Law Firm",
+    challenge:
+      "Regional law firm with no first-page rankings for competitive practice area keywords. Relying entirely on referrals with no online lead generation system.",
+    solution:
+      "Topical authority content strategy, local SEO optimization, and PR-driven link building targeting legal publications and local news outlets.",
+    before: { traffic: "890/mo", rankings: "Page 4-6", leads: "6/mo" },
+    after: {
+      traffic: "5,240/mo",
+      rankings: "#1 for 25 keywords",
+      leads: "23/mo",
+    },
+    improvement: "+190% Consultation Bookings",
+    duration: "10 months",
+  },
 ];
 
 export default function CaseStudies() {
@@ -114,16 +148,31 @@ export default function CaseStudies() {
               >
                 <div className="bg-[#F7F9FC] px-6 py-4 flex items-center justify-between flex-wrap gap-3">
                   <div>
-                    <span className="font-bold text-[#0B2A43] text-lg">
+                    <Link
+                      to="/case-studies/$id"
+                      params={{ id: toSlug(c.industry) }}
+                      className="font-bold text-[#0B2A43] text-lg hover:text-[#38C98A] transition-colors"
+                      data-ocid={`case_studies.${toSlug(c.industry)}.link`}
+                    >
                       {c.industry}
-                    </span>
+                    </Link>
                     <span className="ml-3 text-[#C7D2E0] text-sm bg-[#0B2A43] px-3 py-1 rounded-full">
                       {c.duration}
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-[#38C98A] font-bold text-xl">
-                    <TrendingUp className="w-5 h-5" />
-                    {c.improvement}
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 text-[#38C98A] font-bold text-xl">
+                      <TrendingUp className="w-5 h-5" />
+                      {c.improvement}
+                    </div>
+                    <Link
+                      to="/case-studies/$id"
+                      params={{ id: toSlug(c.industry) }}
+                      className="inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-[#0B2A43] hover:bg-[#38C98A] px-4 py-2 rounded-full transition-colors"
+                      data-ocid={`case_studies.${toSlug(c.industry)}.button`}
+                    >
+                      View Case Study <ArrowRight className="w-3.5 h-3.5" />
+                    </Link>
                   </div>
                 </div>
                 <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-6">

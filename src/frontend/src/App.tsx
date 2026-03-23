@@ -11,7 +11,9 @@ import ChatBot from "./components/ChatBot";
 const Home = lazy(() => import("./pages/Home"));
 const About = lazy(() => import("./pages/About"));
 const Services = lazy(() => import("./pages/Services"));
+const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
 const CaseStudies = lazy(() => import("./pages/CaseStudies"));
+const CaseStudyDetail = lazy(() => import("./pages/CaseStudyDetail"));
 const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Contact = lazy(() => import("./pages/Contact"));
@@ -58,12 +60,30 @@ const servicesRoute = createRoute({
     </Suspense>
   ),
 });
+const serviceDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/services/$id",
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <ServiceDetail />
+    </Suspense>
+  ),
+});
 const caseStudiesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/case-studies",
   component: () => (
     <Suspense fallback={<PageLoader />}>
       <CaseStudies />
+    </Suspense>
+  ),
+});
+const caseStudyDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "/case-studies/$id",
+  component: () => (
+    <Suspense fallback={<PageLoader />}>
+      <CaseStudyDetail />
     </Suspense>
   ),
 });
@@ -108,7 +128,9 @@ const routeTree = rootRoute.addChildren([
   homeRoute,
   aboutRoute,
   servicesRoute,
+  serviceDetailRoute,
   caseStudiesRoute,
+  caseStudyDetailRoute,
   blogRoute,
   blogPostRoute,
   contactRoute,

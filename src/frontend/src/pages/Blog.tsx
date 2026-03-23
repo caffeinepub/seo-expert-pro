@@ -218,6 +218,128 @@ The three pillars of Google Maps rankings:
 ## LocalBusiness Schema Markup
 
 Add JSON-LD LocalBusiness schema to your website with accurate NAP, opening hours, geo-coordinates, and accepted payment methods. While schema alone won't move the needle dramatically, it provides unambiguous signals to Google about your business identity and helps trigger rich results in search.`,
+  "E-E-A-T: Google's New Quality Standard Explained": `E-E-A-T stands for Experience, Expertise, Authoritativeness, and Trustworthiness. Understanding and demonstrating E-E-A-T is the baseline requirement for ranking in competitive niches.
+
+## What Is E-E-A-T?
+
+Google added the first "E" (Experience) in December 2022, expanding the original E-A-T framework:
+- **Experience**: First-hand experience with the topic — a review written by someone who actually used the product carries more weight than secondary sources.
+- **Expertise**: Deep knowledge in the subject area. Formal credentials help, but demonstrated expertise through quality content counts too.
+- **Authoritativeness**: Recognition as a go-to source in the field, built through mentions, citations, and backlinks from authoritative sites.
+- **Trustworthiness**: Accurate, transparent, and reliable information. Google considers trustworthiness the most critical E-E-A-T component.
+
+## Why E-E-A-T Matters More Than Ever
+
+With AI-generated content flooding the internet, Google has doubled down on signals that distinguish genuine human expertise from machine-generated fluff. YMYL (Your Money Your Life) topics — health, finance, legal, safety — face the strictest E-E-A-T scrutiny.
+
+## How to Demonstrate E-E-A-T on Your Site
+
+**Author credentials and bios**: Every content page should have a named author with a detailed bio linking to their credentials, social profiles, and other publications.
+
+**First-hand experience signals**: Write from experience. Include original photos, screenshots, data, and case studies that only someone with genuine experience could produce.
+
+**External validation**: Build mentions and citations from authoritative sources. Guest post on recognized publications. Get featured in industry roundups.
+
+**Transparent about section**: A thorough About page with team bios, company history, and contact information signals trustworthiness.
+
+**Accurate, up-to-date content**: Fact-check everything. Cite primary sources. Update content regularly with "last updated" dates.`,
+
+  "Core Web Vitals 2025: What Changed and How to Fix It": `Google's Core Web Vitals directly influence search rankings. In 2024, FID (First Input Delay) was replaced by INP (Interaction to Next Paint), making the performance bar significantly harder to clear.
+
+## The Three Core Web Vitals in 2025
+
+- **Largest Contentful Paint (LCP)**: Loading performance. Target: under 2.5 seconds.
+- **Interaction to Next Paint (INP)**: Responsiveness. Target: under 200ms.
+- **Cumulative Layout Shift (CLS)**: Visual stability. Target: under 0.1.
+
+## What Changed: FID to INP
+
+FID only measured the delay before the browser starts processing the first interaction. INP measures the entire duration of every interaction throughout the page lifecycle — clicks, taps, keyboard inputs — and reports the worst-case response time.
+
+Common INP culprits: heavy JavaScript on the main thread during interactions, long tasks blocking user input, inefficient event handlers, and expensive third-party scripts.
+
+## How to Fix INP
+
+- Break up long tasks using scheduler.yield() to give the browser time to process interactions
+- Defer non-critical JavaScript — analytics, chat widgets, and tracking scripts
+- Keep event handlers lean and avoid synchronous operations in click handlers
+- Reduce DOM size — large DOMs (5,000+ nodes) slow every interaction
+
+## How to Fix LCP
+
+- Server-side render or prerender your above-the-fold content
+- Preload your LCP image with link rel="preload"
+- Use a CDN to reduce Time to First Byte
+- Convert images to WebP/AVIF with appropriate srcset sizes
+
+## How to Fix CLS
+
+- Always set explicit width and height on images and videos
+- Reserve space for ad slots before they load
+- Avoid inserting content above existing content dynamically
+- Use CSS transform animations instead of layout-triggering properties`,
+
+  "Zero-Click Searches: How to Win Traffic Without the Click": `Over 60% of Google searches now end without a click. Featured snippets, knowledge panels, and AI Overviews capture answers directly in the SERP. This guide shows you how to optimize for position zero and convert SERP visibility into brand authority.
+
+## Understanding the Zero-Click Landscape
+
+Zero-click searches happen when Google serves the answer directly — in a featured snippet, knowledge panel, People Also Ask box, or AI Overview. The queries most likely to produce zero-click results include simple factual questions, definitions, local queries, and calculations.
+
+## How to Win with Featured Snippets (Position Zero)
+
+Featured snippets appear above the first organic result and can triple click-through rate. To earn them:
+
+**Format content to answer questions directly**: For paragraph snippets, provide a concise answer (40-60 words) immediately after the question heading. For list snippets, use properly formatted HTML lists. For table snippets, structure data in clean HTML tables.
+
+**Target question queries**: "What is," "how to," and "why" formats trigger featured snippets most frequently. Use AnswerThePublic or People Also Ask mining to find opportunities.
+
+**Claim snippets from positions 2-10**: You can only earn a featured snippet if you're already ranking in the top 10.
+
+## Optimizing for AI Overviews
+
+To increase your chances of being cited by Google's AI Overviews:
+- Publish comprehensive, well-structured content that directly answers common questions
+- Use clear headings, bullet points, and numbered lists
+- Include original data, research, and expert quotes that AI cannot generate itself
+- Ensure content is fresh and regularly updated
+
+## Converting SERP Visibility to Business Value
+
+Even without clicks, zero-click visibility creates brand awareness. Optimize your Google Business Profile for local pack visibility. Implement FAQ, HowTo, and Article schema to increase rich result eligibility. Track impression data in Google Search Console to measure your growing SERP real estate.`,
+
+  "The Complete Guide to Schema Markup for SEO": `Schema markup is the most underutilized SEO tactic in 2025. Correctly implemented structured data dramatically increases your eligibility for rich results — visually enhanced SERP features that consistently earn higher click-through rates.
+
+## What Is Schema Markup?
+
+Schema markup is code that helps search engines understand the meaning and context of your content. It uses a standardized vocabulary from Schema.org — backed by Google, Microsoft, Yahoo, and Yandex. Google recommends JSON-LD format (a script block in the head tag) because it's easy to implement and debug.
+
+## The Schema Types That Drive Real Results
+
+**FAQ Schema**: Adds expandable Q&As beneath your result in the SERP. Dramatically increases visual real estate and CTR for informational content.
+
+**Article Schema**: Marks up blog posts with author, publisher, and date published. Required for news rich results and strengthens E-E-A-T signals.
+
+**LocalBusiness Schema**: Provides structured business information — address, phone, hours, and geo-coordinates. Critical for local SEO accuracy.
+
+**Product Schema**: For e-commerce pages, enables star ratings, price, and availability in search results. Can increase CTR by 20-30%.
+
+**HowTo Schema**: Converts step-by-step content into rich results with numbered steps displayed directly in the SERP.
+
+**BreadcrumbList Schema**: Replaces the URL with a clean breadcrumb path, making your result more descriptive and trustworthy.
+
+## Validation and Testing
+
+Always validate before publishing using Google's Rich Results Test (search.google.com/test/rich-results), Schema Markup Validator (validator.schema.org), and Google Search Console's Rich Results report.
+
+## Common Mistakes to Avoid
+
+- Marking up content not visible on the page (violates guidelines)
+- Using incorrect schema types for your content
+- Missing required properties from schema.org
+- Implementing schema on thin or low-quality pages
+- Failing to update schema when page content changes
+
+The ROI from properly implemented schema is consistently one of the highest of any SEO tactic.`,
 };
 
 const samplePosts = [
@@ -279,6 +401,38 @@ const samplePosts = [
     tags: ["Keyword Research", "Best Practices"],
     readTime: 11,
     slug: "content-strategy-seo-complete-framework-2026",
+  },
+  {
+    title: "E-E-A-T: Google's New Quality Standard Explained",
+    excerpt:
+      "Google's E-E-A-T framework (Experience, Expertise, Authoritativeness, Trustworthiness) is now the single most important quality signal for ranking in competitive niches. Learn what it means, how Google evaluates it, and exactly what to do to demonstrate genuine E-E-A-T on your site. Includes specific tactics for YMYL (Your Money Your Life) industries.",
+    tags: ["Best Practices", "Technical SEO"],
+    readTime: 7,
+    slug: "eeat-google-quality-standard-explained",
+  },
+  {
+    title: "Core Web Vitals 2025: What Changed and How to Fix It",
+    excerpt:
+      "Google replaced FID with Interaction to Next Paint (INP) as a Core Web Vital in March 2024, and the thresholds for LCP and CLS have been tightened. Discover which sites are most at risk, how to measure your current INP score, and the most effective technical fixes for each vital — with before-and-after case study data.",
+    tags: ["Technical SEO", "Best Practices"],
+    readTime: 6,
+    slug: "core-web-vitals-2025-changes-fixes",
+  },
+  {
+    title: "Zero-Click Searches: How to Win Traffic Without the Click",
+    excerpt:
+      "Over 60% of Google searches now end without a click. Featured snippets, knowledge panels, and AI Overviews are capturing answers directly in the SERP. This guide shows you how to optimize for position zero, structure content for AI summaries, and convert SERP visibility into brand authority — even when users never visit your site.",
+    tags: ["Keyword Research", "On-Page SEO"],
+    readTime: 5,
+    slug: "zero-click-searches-win-traffic-without-click",
+  },
+  {
+    title: "The Complete Guide to Schema Markup for SEO",
+    excerpt:
+      "Schema markup is the most underutilized SEO tactic in 2025. Properly implemented structured data can earn rich snippets, FAQ expansions, star ratings, and event listings directly in search results — dramatically improving click-through rates. This comprehensive guide covers every schema type worth implementing, with copy-paste JSON-LD templates for each.",
+    tags: ["Technical SEO", "On-Page SEO"],
+    readTime: 9,
+    slug: "complete-guide-schema-markup-seo",
   },
 ];
 

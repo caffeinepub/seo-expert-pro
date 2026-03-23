@@ -676,13 +676,23 @@ function ServiceSection({ service }: { service: ServiceData }) {
     >
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-[#38C98A]/15 flex items-center justify-center flex-none">
-            <Icon className="w-6 h-6 text-[#38C98A]" />
+        <div className="flex items-center justify-between gap-4 mb-8 flex-wrap">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-[#38C98A]/15 flex items-center justify-center flex-none">
+              <Icon className="w-6 h-6 text-[#38C98A]" />
+            </div>
+            <h2 className="text-3xl font-extrabold text-[#0B2A43]">
+              {service.title}
+            </h2>
           </div>
-          <h2 className="text-3xl font-extrabold text-[#0B2A43]">
-            {service.title}
-          </h2>
+          <Link
+            to="/services/$id"
+            params={{ id: service.id }}
+            className="inline-flex items-center gap-1.5 text-[#38C98A] hover:text-[#2db87a] text-sm font-semibold transition-colors border border-[#38C98A]/30 px-4 py-1.5 rounded-full hover:bg-[#38C98A]/5"
+            data-ocid={`services.${service.id}.link`}
+          >
+            View Full Page <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
         </div>
 
         {/* Description */}
@@ -890,6 +900,219 @@ export default function Services() {
           </div>
         ))}
       </div>
+
+      {/* ── Why Choose RankPro: Comparison Table ── */}
+      <section className="py-20 bg-[#0B2A43] relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 rounded-full bg-[#38C98A]/5 blur-3xl pointer-events-none" />
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-12">
+            <span className="inline-block bg-[#38C98A]/15 text-[#38C98A] px-4 py-1 rounded-full text-sm font-semibold mb-4">
+              Why Choose RankPro
+            </span>
+            <h2 className="text-3xl font-extrabold text-white mb-3">
+              RankPro vs. The Alternatives
+            </h2>
+            <p className="text-[#C7D2E0] max-w-xl mx-auto">
+              See how a dedicated SEO expert compares to typical agencies and
+              generalist freelancers.
+            </p>
+          </div>
+          <div className="overflow-x-auto rounded-2xl border border-white/10">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left text-[#C7D2E0] font-semibold px-6 py-4 w-1/3">
+                    Feature
+                  </th>
+                  <th className="text-center px-6 py-4">
+                    <span className="inline-block bg-[#38C98A] text-white text-xs font-bold px-3 py-1 rounded-full">
+                      RankPro SEO
+                    </span>
+                  </th>
+                  <th className="text-center text-[#C7D2E0] font-semibold px-6 py-4">
+                    Typical Agency
+                  </th>
+                  <th className="text-center text-[#C7D2E0] font-semibold px-6 py-4">
+                    Freelancer
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  {
+                    feature: "Dedicated Account Manager",
+                    rankpro: true,
+                    agency: false,
+                    freelancer: false,
+                  },
+                  {
+                    feature: "Monthly Reporting & Analytics",
+                    rankpro: true,
+                    agency: true,
+                    freelancer: false,
+                  },
+                  {
+                    feature: "Deep Keyword Research",
+                    rankpro: true,
+                    agency: true,
+                    freelancer: true,
+                  },
+                  {
+                    feature: "Competitor Gap Analysis",
+                    rankpro: true,
+                    agency: false,
+                    freelancer: false,
+                  },
+                  {
+                    feature: "24/7 Support & Communication",
+                    rankpro: true,
+                    agency: false,
+                    freelancer: false,
+                  },
+                  {
+                    feature: "ROI Guarantee Policy",
+                    rankpro: true,
+                    agency: false,
+                    freelancer: false,
+                  },
+                  {
+                    feature: "Technical + Content + Links",
+                    rankpro: true,
+                    agency: true,
+                    freelancer: false,
+                  },
+                  {
+                    feature: "Transparent Pricing",
+                    rankpro: true,
+                    agency: false,
+                    freelancer: true,
+                  },
+                ].map((row, i) => (
+                  <tr
+                    key={row.feature}
+                    className={`border-b border-white/5 ${i % 2 === 0 ? "bg-white/3" : ""}`}
+                  >
+                    <td className="text-[#C7D2E0] px-6 py-4 font-medium">
+                      {row.feature}
+                    </td>
+                    <td className="text-center px-6 py-4">
+                      {row.rankpro ? (
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#38C98A]/20">
+                          <svg
+                            className="w-4 h-4 text-[#38C98A]"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-500/10">
+                          <svg
+                            className="w-4 h-4 text-red-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </span>
+                      )}
+                    </td>
+                    <td className="text-center px-6 py-4">
+                      {row.agency ? (
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#38C98A]/20">
+                          <svg
+                            className="w-4 h-4 text-[#38C98A]"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-500/10">
+                          <svg
+                            className="w-4 h-4 text-red-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </span>
+                      )}
+                    </td>
+                    <td className="text-center px-6 py-4">
+                      {row.freelancer ? (
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-[#38C98A]/20">
+                          <svg
+                            className="w-4 h-4 text-[#38C98A]"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M5 13l4 4L19 7"
+                            />
+                          </svg>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center justify-center w-7 h-7 rounded-full bg-red-500/10">
+                          <svg
+                            className="w-4 h-4 text-red-400"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2.5}
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M6 18L18 6M6 6l12 12"
+                            />
+                          </svg>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
 
       {/* ── FAQ ── */}
       <section className="py-20 bg-white">

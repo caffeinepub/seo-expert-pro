@@ -63,31 +63,62 @@ const services = [
 const testimonials = [
   {
     name: "Sarah Chen",
+    role: "Head of Marketing",
     company: "TechFlow Inc.",
     initials: "SC",
+    color: "#38C98A",
     quote:
-      "RankPro doubled our organic traffic in just 6 months. Incredible results!",
+      "RankPro doubled our organic traffic in just 6 months. We went from 4,200 to over 9,800 monthly visits — and those visitors actually convert. Incredible results that have changed how we budget for marketing.",
     rating: 5,
   },
   {
     name: "James Walker",
+    role: "Founder & CEO",
     company: "HomeStyle Co.",
     initials: "JW",
-    quote: "Our leads from search went up 180%. Best investment we've made.",
+    color: "#38bdf8",
+    quote:
+      "Our leads from search went up 180% in 8 months. Before RankPro, we were invisible online. Now organic is our biggest lead source. Best investment we've made in the history of the company.",
     rating: 5,
   },
   {
     name: "Maria Lopez",
+    role: "Practice Manager",
     company: "MedCare Clinic",
     initials: "ML",
-    quote: "We went from page 3 to #1 for our main keyword. Phenomenal work.",
+    color: "#a78bfa",
+    quote:
+      "We went from page 3 to #1 for our main keyword in under 4 months. New patient bookings from search are up 220%. Amit is transparent, communicative, and delivers exactly what he promises.",
     rating: 5,
   },
   {
     name: "David Kim",
+    role: "Partner",
     company: "LegalEdge LLP",
     initials: "DK",
-    quote: "Professional, data-driven, and genuinely cares about results.",
+    color: "#fb923c",
+    quote:
+      "Professional, data-driven, and genuinely cares about results. We now rank page 1 for 45 competitive legal keywords. The ROI has been 8x our monthly retainer. I recommend RankPro to every business owner I meet.",
+    rating: 5,
+  },
+  {
+    name: "Priya Sharma",
+    role: "E-commerce Director",
+    company: "NovaBrands",
+    initials: "PS",
+    color: "#f472b6",
+    quote:
+      "After 3 months of technical SEO fixes and content optimization, our revenue from organic search jumped by $42,000/month. The team found issues our previous agency had missed for two years. Game-changing work.",
+    rating: 5,
+  },
+  {
+    name: "Marcus O'Brien",
+    role: "VP of Growth",
+    company: "ScaleUp SaaS",
+    initials: "MO",
+    color: "#34d399",
+    quote:
+      "Within 6 months of the keyword strategy and content roadmap, we ranked in the top 3 for 200+ target keywords. Our CAC from organic dropped 60% compared to paid channels. Amit is simply the best in the business.",
     rating: 5,
   },
 ];
@@ -134,34 +165,44 @@ const marqueeItems = [
 
 const defaultFaqs = [
   {
-    question: "What is SEO and why does it matter?",
-    answer:
-      "SEO (Search Engine Optimization) helps your website rank higher in search results, driving organic traffic and qualified leads without ongoing ad spend.",
-  },
-  {
     question: "How long does SEO take to show results?",
     answer:
-      "Most clients see measurable improvements within 3-6 months. Full competitive rankings typically take 6-12 months depending on industry.",
+      "Most clients see measurable ranking improvements within 90 days for lower-competition keywords. For competitive industries, expect 6–12 months for significant organic growth. SEO compounds over time — the longer you invest, the greater the returns, unlike paid ads that stop the moment your budget runs out.",
   },
   {
-    question: "What's the difference between On-Page and Off-Page SEO?",
+    question: "What is technical SEO and why does it matter?",
     answer:
-      "On-Page SEO involves optimizing your website's content and structure. Off-Page SEO focuses on building authority through backlinks and brand mentions.",
-  },
-  {
-    question: "Do I need SEO if I'm already running paid ads?",
-    answer:
-      "Yes. SEO delivers long-term compounding returns. While ads stop when you stop paying, SEO rankings keep generating free traffic indefinitely.",
+      "Technical SEO is the infrastructure layer of your website — crawlability, indexation, site speed, mobile optimization, structured data, and more. If search engine bots can't properly access or understand your pages, no amount of great content will help you rank. Technical issues are often invisible to site owners but have a dramatic impact on performance.",
   },
   {
     question: "How do you measure SEO success?",
     answer:
-      "We track keyword rankings, organic traffic, click-through rates, conversion rates, and ultimately leads and revenue attributable to organic search.",
+      "We track metrics that tie directly to business outcomes: keyword rankings for target terms, organic traffic growth, click-through rates from search results, conversion rates from organic visitors, and ultimately leads and revenue attributable to organic search. Every client gets a monthly report with these KPIs clearly visualized.",
   },
   {
-    question: "What makes your SEO approach different?",
+    question: "What is E-E-A-T and how does it affect my rankings?",
     answer:
-      "We combine technical rigor with content strategy and genuine link building. No shortcuts -- just proven, white-hat methods that last.",
+      "E-E-A-T stands for Experience, Expertise, Authoritativeness, and Trustworthiness — Google's quality evaluation framework. Sites that demonstrate real-world experience and recognized expertise in their field rank higher, especially in health, finance, and legal niches. We build E-E-A-T through author credentials, trust signals, quality backlinks, and content that proves genuine expertise.",
+  },
+  {
+    question: "Do I need SEO if I'm already running paid ads?",
+    answer:
+      "Yes. Paid ads deliver instant traffic, but stop the moment you stop paying. SEO builds a permanent, compounding asset — once you rank for high-intent keywords, those clicks are free forever. Most high-growth businesses use both: ads for immediate conversions and SEO for long-term, lower-cost customer acquisition.",
+  },
+  {
+    question: "What's included in your monthly SEO reports?",
+    answer:
+      "Every monthly report includes: keyword rank tracking (with movement indicators), organic traffic trends from Google Analytics, new backlinks acquired, technical issues flagged and fixed, content performance metrics, and a written summary with recommendations for the next month. Reports are delivered by the 5th of each month.",
+  },
+  {
+    question: "Can you guarantee #1 rankings on Google?",
+    answer:
+      "No ethical SEO professional can guarantee specific rankings — and you should be cautious of anyone who claims they can. What I do guarantee is transparent work, proven methodologies, monthly reporting, and a relentless focus on improving your organic visibility and ROI. My case studies show consistent, measurable growth across diverse industries.",
+  },
+  {
+    question: "What makes your SEO approach different from other agencies?",
+    answer:
+      "Most agencies use cookie-cutter strategies across all clients. Every campaign I run starts with deep research into your specific market, competitors, and customer journey. I combine technical rigor, content strategy, and genuine link building in a single integrated plan. You get direct access to the expert doing the work — no account managers passing messages.",
   },
 ];
 
@@ -206,7 +247,7 @@ export default function Home() {
     loadData();
   }, [loadData]);
 
-  const displayFaqs = faqs.length > 0 ? faqs.slice(0, 6) : defaultFaqs;
+  const displayFaqs = faqs.length > 0 ? faqs.slice(0, 8) : defaultFaqs;
 
   return (
     <div className="min-h-screen">
@@ -417,7 +458,7 @@ export default function Home() {
               What Our Clients Say
             </h2>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {testimonials.map((t) => (
               <div
                 key={t.name}
@@ -434,7 +475,10 @@ export default function Home() {
 
                 {/* Header: avatar + name */}
                 <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-[#38C98A] flex items-center justify-center flex-shrink-0">
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0"
+                    style={{ background: t.color }}
+                  >
                     <span className="text-white font-bold text-sm">
                       {t.initials}
                     </span>
@@ -443,7 +487,9 @@ export default function Home() {
                     <div className="text-white font-semibold text-sm">
                       {t.name}
                     </div>
-                    <div className="text-white/50 text-xs">{t.company}</div>
+                    <div className="text-white/50 text-xs">
+                      {t.role} · {t.company}
+                    </div>
                   </div>
                   {/* Stars pushed to right */}
                   <div className="ml-auto flex gap-0.5">
@@ -462,7 +508,10 @@ export default function Home() {
 
                 {/* Company badge */}
                 <div className="flex items-center justify-between">
-                  <span className="inline-block bg-[#38C98A]/20 text-[#38C98A] text-xs font-semibold px-3 py-1 rounded-full">
+                  <span
+                    className="inline-block text-xs font-semibold px-3 py-1 rounded-full"
+                    style={{ background: `${t.color}25`, color: t.color }}
+                  >
                     {t.company}
                   </span>
                   <div className="flex gap-1">
