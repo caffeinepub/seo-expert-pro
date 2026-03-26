@@ -428,6 +428,7 @@ function QuoteForm({ serviceTitle }: QuoteFormProps) {
       service: serviceTitle,
       message: form.message,
       date: new Date().toISOString(),
+      timestamp: Date.now(),
     };
 
     const existing = JSON.parse(
@@ -537,7 +538,7 @@ function QuoteForm({ serviceTitle }: QuoteFormProps) {
                     placeholder="Amit Sharma"
                     value={form.name}
                     onChange={handleChange}
-                    className="bg-white/8 border-white/15 text-white placeholder:text-white/35 focus:border-[#38C98A] focus:ring-[#38C98A]/30 h-11"
+                    className="bg-[#0d3352] border-white/15 text-white placeholder:text-white/35 focus:border-[#38C98A] focus:ring-[#38C98A]/30 h-11"
                     data-ocid="quote.input"
                   />
                 </div>
@@ -556,7 +557,7 @@ function QuoteForm({ serviceTitle }: QuoteFormProps) {
                     placeholder="you@company.com"
                     value={form.email}
                     onChange={handleChange}
-                    className="bg-white/8 border-white/15 text-white placeholder:text-white/35 focus:border-[#38C98A] focus:ring-[#38C98A]/30 h-11"
+                    className="bg-[#0d3352] border-white/15 text-white placeholder:text-white/35 focus:border-[#38C98A] focus:ring-[#38C98A]/30 h-11"
                     data-ocid="quote.input"
                   />
                 </div>
@@ -578,7 +579,7 @@ function QuoteForm({ serviceTitle }: QuoteFormProps) {
                   placeholder="+977 98XXXXXXXX"
                   value={form.phone}
                   onChange={handleChange}
-                  className="bg-white/8 border-white/15 text-white placeholder:text-white/35 focus:border-[#38C98A] focus:ring-[#38C98A]/30 h-11"
+                  className="bg-[#0d3352] border-white/15 text-white placeholder:text-white/35 focus:border-[#38C98A] focus:ring-[#38C98A]/30 h-11"
                   data-ocid="quote.input"
                 />
               </div>
@@ -611,7 +612,7 @@ function QuoteForm({ serviceTitle }: QuoteFormProps) {
                   placeholder="Tell us about your website, goals, current challenges, and anything else that would help us understand your needs..."
                   value={form.message}
                   onChange={handleChange}
-                  className="bg-white/8 border-white/15 text-white placeholder:text-white/35 focus:border-[#38C98A] focus:ring-[#38C98A]/30 resize-none"
+                  className="bg-[#0d3352] border-white/15 text-white placeholder:text-white/35 focus:border-[#38C98A] focus:ring-[#38C98A]/30 resize-none"
                   data-ocid="quote.textarea"
                 />
               </div>

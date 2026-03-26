@@ -1,11 +1,21 @@
 import { Link } from "@tanstack/react-router";
 import { Clock, Tag } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import type { BlogPost } from "../backend";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
-import { useBackend } from "../hooks/useBackend";
+
+interface BlogPost {
+  id: bigint;
+  title: string;
+  content: string;
+  date: bigint;
+  slug: string;
+  tags: string[];
+  readTime: bigint;
+  excerpt: string;
+  image?: string;
+}
 
 const POST_CONTENT: Record<string, string> = {
   "10 On-Page SEO Techniques That Actually Work in 2026": `On-page SEO is still the foundation of every top-ranking page. While algorithms evolve constantly, the core principles of relevance and user experience have never mattered more. In 2026, Google's systems are smarter—but so are the tactics that work.
@@ -340,9 +350,280 @@ Always validate before publishing using Google's Rich Results Test (search.googl
 - Failing to update schema when page content changes
 
 The ROI from properly implemented schema is consistently one of the highest of any SEO tactic.`,
+  "Ultimate SEO Roadmap for Beginners in 2026: Step-by-Step Strategy to Grow Your Website": `SEO is no longer about shortcuts, tricking search engines, or focusing only on keywords. Search engines like Google now reward websites that provide value, build trust, and deliver a great user experience.
+
+Whether you are a beginner starting a blog or an experienced marketer, this SEO Roadmap for Beginners in 2026 will help you understand, plan, and implement strategies that actually work.
+
+The SEO Roadmap for Beginners in 2026 is a step-by-step plan to improve your website ranking, increase traffic, and build long-term authority.
+
+By following this roadmap, you can:
+- Rank higher in search engines.
+- Get consistent organic traffic.
+- Build trust and authority.
+
+---
+
+## Build a Strong Website Foundation: Part of the SEO Roadmap for Beginners in 2026
+
+Before you start with content or backlinks, your website needs a solid foundation.
+
+Key Areas to Check:
+
+Website Speed: Pages should load in under 3 seconds. Slow websites lose visitors immediately.
+
+Mobile-Friendliness: Your site must work on mobile phones and tablets. Google prioritizes mobile-first indexing.
+
+Secure Website: HTTPS is a must. A secure site builds trust with visitors and search engines.
+
+No Broken Links: Regularly check for 404 errors or pages that have been removed.
+
+Tools to Use:
+- Google Search Console – Identify errors and indexing issues.
+- Google PageSpeed Insights – Test speed and performance.
+- GTmetrix – Analyse loading time and performance optimization suggestions.
+
+Tip: A slow or broken website discourages users, which negatively affects your rankings. Think of speed and reliability as your SEO foundation.
+
+---
+
+## Understand User Search Intent
+
+SEO focuses on what users are searching for and why. Instead of only targeting keywords, you need to understand search intent.
+
+Types of Search Intent:
+- Informational: Users want to learn something (e.g., "What is SEO?").
+- Navigational: Users are looking for a specific website or page.
+- Transactional: Users want to buy something.
+- Commercial Investigation: Users are comparing options before purchase.
+
+How to Optimize for Search Intent:
+- Identify the questions your audience is asking.
+- Solve a specific problem in your content.
+- Target natural, conversational keywords that match the queries.
+
+Tools:
+- Ubersuggest – Discover keywords and search questions.
+- Ahrefs – Analyze competitors and their top-performing content.
+
+Example: Instead of writing "SEO tips," create "Step-by-step SEO guide for beginners in 2026". This targets both the keyword and the user's intent.
+
+---
+
+## Create the Helpful Content
+
+Content is still the most important SEO factor, but it must solve real problems.
+
+How to Write Effective Content:
+- Use simple words and short sentences. Avoid jargon unless necessary.
+- Structure articles with headings, bullets, and visuals.
+- Include examples, step-by-step instructions, and practical tips.
+- Answer questions directly.
+
+Tools:
+- Grammarly – Improve readability and grammar.
+- Surfer SEO – Optimize content for keywords and structure.
+
+Tip: Write like you are teaching a friend. People remember and trust content that's easy to read.
+
+---
+
+## Build Content Clusters in SEO Roadmap for Beginners in 2026
+
+Random blog posts are less effective than topic clusters. A cluster is a group of related articles centred around a main topic.
+
+Example Cluster:
+- Main Topic: SEO Basics
+- Subtopics: On-page SEO, Technical SEO, Backlink Strategies, Content Creation, UX Optimization
+
+Clusters signal to search engines that your website is an authority on a topic. Internal linking within the cluster also boosts SEO performance.
+
+---
+
+## Optimize Website Speed and Mobile UX
+
+A fast, mobile-friendly website is crucial for the SEO Roadmap for Beginners in 2026.
+
+Steps to Improve Website Performance:
+- Optimize images: Compress them without losing quality.
+- Reduce unnecessary code: Minify CSS, JavaScript, and HTML.
+- Improve hosting: Choose a reliable server with low response times.
+- Simplify navigation: Mobile users should find information quickly.
+
+Tools:
+- GTmetrix
+- Google PageSpeed Insights
+
+Rule: Faster websites = happier users = higher rankings.
+
+---
+
+## Build High-Quality Backlinks
+
+Backlinks still influence rankings, but quality is more important than quantity.
+
+How to Build Authority Links:
+- Publish guest posts on trusted websites in your niche.
+- Reach out to relevant blogs or resources to share your content.
+- Earn mentions through social media and PR campaigns.
+- Avoid buying spammy backlinks—they can harm your SEO.
+
+Tools:
+- SEMrush
+- Ahrefs
+
+Tip: Focus on links that add real value to users, not just search engines.
+
+---
+
+## Use AI + Human Input for Content
+
+AI speeds research and drafting for your SEO Roadmap for Beginners in 2026.
+
+How AI Helps:
+- Generate topic ideas
+- Research trending queries
+- Draft outlines
+
+Human Input is Key:
+- Add personal examples and insights.
+- Verify facts and statistics.
+- Make content natural and readable.
+
+Balance = Best SEO Strategy
+
+---
+
+## Track SEO Performance
+
+SEO requires continuous monitoring. Without tracking, you don't know what's working.
+
+Metrics to Track:
+- Organic traffic
+- Keyword ranking improvements
+- Bounce rate and time on page
+- Click-through rates (CTR)
+
+Tools:
+- Google Analytics
+
+Tip: "If it works, do more. If it doesn't, adjust and improve."
+
+---
+
+## Update Old Content
+
+Old content loses rankings. Refresh it regularly.
+
+Steps to Refresh Content:
+- Add new information and statistics.
+- Fix broken links.
+- Improve readability.
+- Add new keywords and internal links.
+
+Google rewards fresh, accurate, and useful content.
+
+---
+
+## Build Trust and Authority
+
+Search engines reward trustworthy websites.
+
+How to Build Trust:
+- Show author credentials.
+- Cite reliable sources.
+- Encourage positive reviews and testimonials.
+- Build a recognizable brand online.
+
+Pro Tip: A trusted brand is naturally easier to rank.
+
+---
+
+## Add Video and Visual Content
+
+Visuals boost engagement and dwell time.
+
+Ideas for Visuals:
+- Tutorials and demonstrations.
+- Infographics summarizing key points.
+- Short-form videos for social media.
+
+Tip: Combining blog + video improves both engagement and SEO.
+
+---
+
+## Focus on User Experience (UX)
+
+Good UX keeps users on your site, which improves rankings.
+
+Improve UX by:
+- Simple, clean design.
+- Clear and intuitive navigation.
+- Fast-loading pages.
+- Readable fonts and headings.
+
+Remember: Google rewards sites that people enjoy using.
+
+---
+
+## Prepare for Future SEO Trends
+
+SEO is evolving. Stay ahead of trends:
+- Voice search optimization.
+- AI-driven search results.
+- Local SEO for "near me" searches.
+- Personal branding for credibility.
+
+Tip: Websites that adapt early gain a long-term advantage.
+
+---
+
+## Daily SEO Action Plan
+
+Follow this simple daily routine for consistent SEO growth:
+- Research 1 keyword
+- Write 1 helpful article.
+- Update 1 old page
+- Build 1 quality backlink.
+- Track results and performance
+
+Consistency beats shortcuts.
+
+---
+
+## Social Media and Short-Form Content
+
+Promote your content across platforms to drive traffic:
+- Share snippets on LinkedIn, Instagram, and Facebook.
+- Create 30–60 second videos highlighting tips.
+- Use infographics for quick insights.
+- Encourage sharing to expand reach.
+
+---
+
+## Conclusion
+
+SEO is simple, actionable, and user-focused:
+
+Help people → Build trust → Stay consistent.
+
+No tricks, no shortcuts, only real value wins. By following this roadmap, your website will:
+- Rank higher on search engines.
+- Gain authority and credibility.
+- Drive steady, long-term traffic.`,
 };
 
 const samplePosts = [
+  {
+    title:
+      "Ultimate SEO Roadmap for Beginners in 2026: Step-by-Step Strategy to Grow Your Website",
+    excerpt:
+      "A complete beginner's guide to SEO in 2026 — covering keyword research, on-page optimization, technical SEO, link building, and content strategy in one step-by-step roadmap.",
+    tags: ["Best Practices", "Keyword Research"],
+    readTime: 18,
+    slug: "ultimate-seo-roadmap-beginners-2026",
+    image:
+      "/assets/uploads/seo-roadmap-for-beginners-in-2026-019d1eeb-c6fe-7158-a287-def1dce147bb-1.webp",
+  },
   {
     title: "10 On-Page SEO Techniques That Actually Work in 2026",
     excerpt:
@@ -1009,36 +1290,22 @@ function BlogGridParticles() {
 export default function Blog() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const backend = useBackend();
-
-  const load = useCallback(async () => {
-    try {
-      let existing = await backend.listBlogPosts();
-      if (existing.length === 0) {
-        for (const p of samplePosts) {
-          const fullContent = POST_CONTENT[p.title] ?? p.excerpt;
-          await backend.createBlogPost(
-            p.title,
-            p.excerpt,
-            fullContent,
-            p.tags,
-            p.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
-            BigInt(p.readTime),
-          );
-        }
-        existing = await backend.listBlogPosts();
-      }
-      setPosts(existing);
-    } catch {
-      // show empty state
-    } finally {
-      setLoading(false);
-    }
-  }, [backend]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    const mapped: BlogPost[] = samplePosts.map((p, index) => ({
+      id: BigInt(index),
+      title: p.title,
+      excerpt: p.excerpt,
+      tags: p.tags,
+      readTime: BigInt(p.readTime),
+      slug: p.slug ?? p.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+      content: POST_CONTENT[p.title] ?? p.excerpt,
+      date: BigInt(Date.now()),
+      image: (p as { image?: string }).image,
+    }));
+    setPosts(mapped);
+    setLoading(false);
+  }, []);
 
   const featured = posts[0];
   const rest = posts.slice(1);

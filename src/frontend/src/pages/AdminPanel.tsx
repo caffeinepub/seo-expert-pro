@@ -1464,15 +1464,25 @@ export default function AdminPanel() {
               email: string;
               phone: string;
               message: string;
-              timestamp: number;
+              timestamp?: number;
+              date?: string;
             }>;
-            return parsed.map((e) => ({
-              name: e.name,
-              email: e.email,
-              phone: e.phone,
-              message: e.message,
-              timestamp: BigInt(e.timestamp) * 1_000_000n,
-            }));
+            return parsed
+              .filter((e) => e.name)
+              .map((e) => {
+                const tsMs = e.timestamp
+                  ? e.timestamp
+                  : e.date
+                    ? new Date(e.date).getTime()
+                    : Date.now();
+                return {
+                  name: e.name,
+                  email: e.email,
+                  phone: e.phone,
+                  message: e.message ?? "",
+                  timestamp: BigInt(Math.floor(tsMs)) * 1_000_000n,
+                };
+              });
           } catch {
             return [];
           }
