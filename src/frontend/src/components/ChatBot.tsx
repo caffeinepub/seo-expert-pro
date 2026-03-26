@@ -9,31 +9,6 @@ interface Message {
   from: "user" | "bot";
 }
 
-function getBotReply(input: string): string {
-  const q = input.toLowerCase();
-  if (/\b(hi|hello|hey)\b/.test(q))
-    return "Hi! I'm your SEO Assistant. How can I help you today? Ask me about our services, pricing, or how to get started.";
-  if (/service|what do you do/.test(q))
-    return "We offer On-Page SEO, Off-Page SEO, Technical SEO, Keyword Research, and Local SEO services. Visit our Services page for details!";
-  if (/price|cost|how much/.test(q))
-    return "Our pricing is customized based on your needs. Get a free SEO audit to start -- no obligations!";
-  if (/audit|free/.test(q))
-    return "We offer a FREE SEO audit! Just visit our Contact page and fill out the form, or click 'Get Free SEO Audit' in the top menu.";
-  if (/contact|reach|email|phone/.test(q))
-    return "You can reach us via the Contact page. We respond within 24 hours!";
-  if (/result|case study|proof/.test(q))
-    return "Check out our Case Studies page to see real results we've achieved for clients \u2014 traffic increases, ranking improvements, and ROI.";
-  if (/blog|tips|guide/.test(q))
-    return "Our Blog has actionable SEO tips and guides. Check it out for the latest strategies!";
-  if (/local seo/.test(q))
-    return "Local SEO helps you rank in your city. We optimize your Google Business Profile, local citations, and on-page signals.";
-  if (/technical seo/.test(q))
-    return "Technical SEO covers site speed, crawlability, indexing, Core Web Vitals, and more. We do full technical audits.";
-  if (/keyword/.test(q))
-    return "Keyword research is the foundation of SEO. We find high-value, low-competition keywords your competitors are missing.";
-  return "Great question! For detailed answers, please visit our Contact page or fill out the free audit form. We'd love to help!";
-}
-
 let idCounter = 0;
 function nextId() {
   return ++idCounter;
@@ -44,17 +19,21 @@ export default function ChatBot() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [initialized, setInitialized] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messageCount = messages.length;
   const { actor } = useActor();
+
+  // Keep a rolling history for context (last 10 messages)
+  const historyRef = useRef<{ role: string; content: string }[]>([]);
 
   function openChat() {
     if (!initialized) {
       setMessages([
         {
           id: nextId(),
-          text: "Hi! I'm your SEO Assistant. Ask me anything about SEO or our services!",
+          text: "Hi! I'm your SEO Assistant powered by AI. Ask me anything about SEO or our services!",
           from: "bot",
         },
       ]);
@@ -70,31 +49,72 @@ export default function ChatBot() {
 
   async function sendMessage() {
     const text = input.trim();
-    if (!text) return;
-    const botReply = getBotReply(text);
-    const userMsg: Message = { id: nextId(), text, from: "user" };
-    const botMsg: Message = { id: nextId(), text: botReply, from: "bot" };
-    setMessages((prev) => [...prev, userMsg, botMsg]);
-    setInput("");
+    if (!text || isLoading || !actor) return;
 
-    // Log to backend silently
-    if (actor) {
-      actor.logChatbotMessage(text, botReply).catch(() => {});
-    }
-    // Also save to localStorage so admin panel can always see chatbot logs
+    const userMsg: Message = { id: nextId(), text, from: "user" };
+    setMessages((prev) => [...prev, userMsg]);
+    setInput("");
+    setIsLoading(true);
+
+    // Add to history
+    historyRef.current = [
+      ...historyRef.current.slice(-9),
+      { role: "user", content: text },
+    ];
+
     try {
-      const existing = JSON.parse(
-        localStorage.getItem("rankpro_chatbot_logs") ?? "[]",
-      );
-      existing.push({
-        id: Date.now(),
-        question: text,
-        answer: botReply,
-        timestamp: Date.now(),
-      });
-      localStorage.setItem("rankpro_chatbot_logs", JSON.stringify(existing));
+      // Build history JSON string for backend (comma-prefixed objects, or empty string)
+      const historyJsonStr =
+        historyRef.current.length > 1
+          ? `,${historyRef.current
+              .slice(0, -1)
+              .map(
+                (m) =>
+                  `{"role":"${m.role}","content":${JSON.stringify(m.content)}}`,
+              )
+              .join(",")}`
+          : "";
+
+      // Call backend askOpenAI via HTTP outcalls proxy
+      // biome-ignore lint/suspicious/noExplicitAny: askOpenAI added in backend but not yet in generated types
+      const botReply = (await (actor as any).askOpenAI(
+        text,
+        historyJsonStr,
+      )) as string;
+
+      historyRef.current = [
+        ...historyRef.current,
+        { role: "assistant", content: botReply },
+      ];
+
+      const botMsg: Message = { id: nextId(), text: botReply, from: "bot" };
+      setMessages((prev) => [...prev, botMsg]);
+
+      // Log silently
+      actor.logChatbotMessage(text, botReply).catch(() => {});
+      try {
+        const existing = JSON.parse(
+          localStorage.getItem("rankpro_chatbot_logs") ?? "[]",
+        );
+        existing.push({
+          id: Date.now(),
+          question: text,
+          answer: botReply,
+          timestamp: Date.now(),
+        });
+        localStorage.setItem("rankpro_chatbot_logs", JSON.stringify(existing));
+      } catch {
+        /* ignore */
+      }
     } catch {
-      /* ignore */
+      const errMsg: Message = {
+        id: nextId(),
+        text: "Sorry, I'm having trouble connecting right now. Please try again or contact us directly at +977 9868730337.",
+        from: "bot",
+      };
+      setMessages((prev) => [...prev, errMsg]);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -107,7 +127,7 @@ export default function ChatBot() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll when message count changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messageCount]);
+  }, [messageCount, isLoading]);
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -138,7 +158,7 @@ export default function ChatBot() {
                   <p className="text-white font-semibold text-sm">
                     SEO Assistant
                   </p>
-                  <p className="text-green-300 text-xs">&#9679; Online</p>
+                  <p className="text-green-300 text-xs">&#9679; AI-Powered</p>
                 </div>
               </div>
               <button
@@ -171,6 +191,32 @@ export default function ChatBot() {
                   </div>
                 </div>
               ))}
+              {isLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-white text-gray-400 px-3 py-2 rounded-2xl rounded-bl-sm shadow-sm border border-gray-100 text-sm">
+                    <span className="inline-flex gap-1">
+                      <span
+                        className="animate-bounce"
+                        style={{ animationDelay: "0ms" }}
+                      >
+                        ●
+                      </span>
+                      <span
+                        className="animate-bounce"
+                        style={{ animationDelay: "150ms" }}
+                      >
+                        ●
+                      </span>
+                      <span
+                        className="animate-bounce"
+                        style={{ animationDelay: "300ms" }}
+                      >
+                        ●
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
 
@@ -182,15 +228,16 @@ export default function ChatBot() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about SEO..."
+                disabled={isLoading}
                 data-ocid="chatbot.input"
-                className="flex-1 text-sm px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#38C98A]/40 focus:border-[#38C98A] bg-gray-50"
+                className="flex-1 text-sm px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#38C98A]/40 focus:border-[#38C98A] bg-gray-50 disabled:opacity-60"
               />
               <button
                 type="button"
                 onClick={() => {
                   void sendMessage();
                 }}
-                disabled={!input.trim()}
+                disabled={!input.trim() || isLoading || !actor}
                 data-ocid="chatbot.submit_button"
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 style={{ background: "#38C98A" }}
