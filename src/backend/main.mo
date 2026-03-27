@@ -12,12 +12,14 @@ import Principal "mo:core/Principal";
 import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 
-// Specify the data migration function in with-clause
-
 actor {
   // Initialize the user system state
   let accessControlState = AccessControl.initState();
   include MixinAuthorization(accessControlState);
+
+  // Retained for upgrade compatibility (previously used for OpenAI integration)
+  stable var openAIApiKey : Text = "";
+  stable var systemPrompt : Text = "";
 
   // User Profile Management
   public type UserProfile = {
@@ -97,46 +99,36 @@ actor {
   let chatbotLogs = Map.empty<Nat, ChatbotLog>();
 
   // ─── Email/Password Admin Auth ───────────────────────────────────────────────
-  // Default credentials (stable vars to persist across upgrades)
   stable var adminEmail : ?Text = ?"amiyadav410@gmail.com";
   stable var adminPassword : ?Text = ?"RankPro@2026";
-  stable var adminCredentialsSet : Bool = true; // Track if credentials have been initialized
+  stable var adminCredentialsSet : Bool = true;
   let adminSessions = Map.empty<Text, Time.Time>();
 
-  // Check if admin credentials have been set up
   public query func hasAdminSetup() : async Bool {
     adminCredentialsSet and adminEmail != null;
   };
 
-  // Setup or reset admin credentials
-  // SECURITY: Only allow setup if credentials haven't been set, or require admin authentication
   public shared ({ caller }) func setupAdminCredentials(email : Text, password : Text) : async Bool {
-    // If credentials are already set, require admin authentication to change them
     if (adminCredentialsSet) {
       if (not (AccessControl.hasPermission(accessControlState, caller, #admin))) {
         Runtime.trap("Unauthorized: Only admins can reset credentials");
       };
     };
-    
     adminEmail := ?email;
     adminPassword := ?password;
     adminCredentialsSet := true;
-    
-    // Clear all existing sessions when credentials change for security
     for ((token, _) in adminSessions.entries()) {
-      ignore adminSessions.remove(token);
+      adminSessions.remove(token);
     };
-    
     true;
   };
 
-  // Login: returns a session token if credentials match
   public shared func loginAdmin(email : Text, password : Text) : async ?Text {
     switch (adminEmail, adminPassword) {
       case (?storedEmail, ?storedPass) {
         if (storedEmail == email and storedPass == password) {
           let token = "tok-" # Nat64.fromIntWrap(Time.now()).toText();
-          let expiry = Time.now() + 86_400_000_000_000; // 24 hours
+          let expiry = Time.now() + 86_400_000_000_000;
           adminSessions.add(token, expiry);
           ?token;
         } else {
@@ -147,7 +139,6 @@ actor {
     };
   };
 
-  // Verify a session token
   public query func verifyAdminToken(token : Text) : async Bool {
     switch (adminSessions.get(token)) {
       case (?expiry) { Time.now() < expiry };
@@ -155,23 +146,18 @@ actor {
     };
   };
 
-  // Logout: invalidate a session token
   public shared func logoutAdmin(token : Text) : async () {
-    ignore adminSessions.remove(token);
+    adminSessions.remove(token);
   };
 
-  // Change admin password (requires current password)
   public shared func changeAdminPassword(email : Text, oldPassword : Text, newPassword : Text) : async Bool {
     switch (adminEmail, adminPassword) {
       case (?storedEmail, ?storedPass) {
         if (storedEmail == email and storedPass == oldPassword) {
           adminPassword := ?newPassword;
-          
-          // Clear all existing sessions when password changes for security
           for ((token, _) in adminSessions.entries()) {
-            ignore adminSessions.remove(token);
+            adminSessions.remove(token);
           };
-          
           true;
         } else {
           false;
@@ -181,7 +167,6 @@ actor {
     };
   };
 
-  // Token-authenticated contact submissions
   public query func getContactSubmissionsWithToken(token : Text) : async [ContactFormEntry] {
     switch (adminSessions.get(token)) {
       case (?expiry) {
@@ -195,7 +180,6 @@ actor {
     };
   };
 
-  // Token-authenticated chatbot logs
   public query func getChatbotLogsWithToken(token : Text) : async [ChatbotLog] {
     switch (adminSessions.get(token)) {
       case (?expiry) {
@@ -241,7 +225,6 @@ actor {
     };
   };
 
-  // Contact Form Methods
   public shared func submitContactForm(name : Text, email : Text, phone : Text, message : Text) : async () {
     let entry : ContactFormEntry = {
       name;
@@ -260,33 +243,16 @@ actor {
     contacts.toArray();
   };
 
-  // FAQ Section
   public query func getFAQs() : async [FAQEntry] {
     [
-      {
-        question = "What is SEO?";
-        answer = "SEO stands for Search Engine Optimization. It's the process of improving your website to increase its visibility when people search for products or services related to your business on Google and other search engines.";
-      },
-      {
-        question = "How long does it take to see SEO results?";
-        answer = "SEO results can take anywhere from 3 to 6 months to start showing significant improvements, depending on the competitiveness of your industry and the intensity of your SEO efforts.";
-      },
-      {
-        question = "What are keywords in SEO?";
-        answer = "Keywords are the words and phrases that people type into search engines to find what they're looking for. In SEO, keywords refer to the words and phrases that are strategically placed on your website to attract search engine traffic.";
-      },
-      {
-        question = "Why is link building important for SEO?";
-        answer = "Link building is important because search engines like Google use links as a ranking factor. High-quality backlinks from authoritative sites can help improve your website's search engine ranking.";
-      },
-      {
-        question = "Can I do SEO myself?";
-        answer = "Yes, you can handle basic SEO tasks yourself, but working with an expert can help you develop a more effective strategy and achieve better results.";
-      },
+      { question = "What is SEO?"; answer = "SEO stands for Search Engine Optimization. It's the process of improving your website to increase its visibility when people search for products or services related to your business on Google and other search engines." },
+      { question = "How long does it take to see SEO results?"; answer = "SEO results can take anywhere from 3 to 6 months to start showing significant improvements, depending on the competitiveness of your industry and the intensity of your SEO efforts." },
+      { question = "What are keywords in SEO?"; answer = "Keywords are the words and phrases that people type into search engines to find what they're looking for. In SEO, keywords refer to the words and phrases that are strategically placed on your website to attract search engine traffic." },
+      { question = "Why is link building important for SEO?"; answer = "Link building is important because search engines like Google use links as a ranking factor. High-quality backlinks from authoritative sites can help improve your website's search engine ranking." },
+      { question = "Can I do SEO myself?"; answer = "Yes, you can handle basic SEO tasks yourself, but working with an expert can help you develop a more effective strategy and achieve better results." },
     ];
   };
 
-  // Chatbot Logging Methods
   public shared func logChatbotMessage(question : Text, answer : Text) : async () {
     let logEntry : ChatbotLog = {
       id = nextLogId;

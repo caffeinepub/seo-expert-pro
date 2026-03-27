@@ -158,7 +158,7 @@ export default function Navbar() {
             data-ocid="nav.link"
           >
             <img
-              src="/assets/generated/rankpro-logo.png"
+              src="/assets/uploads/logos-1.png"
               alt="RankPro Logo"
               className="h-14 w-auto object-contain block rounded-tl-xl rounded-bl-xl rounded-br-xl"
               loading="eager"

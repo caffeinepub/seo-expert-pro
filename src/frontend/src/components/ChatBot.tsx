@@ -14,26 +14,99 @@ function nextId() {
   return ++idCounter;
 }
 
+function getBotReply(input: string): string {
+  const q = input.toLowerCase();
+  if (
+    q.includes("price") ||
+    q.includes("cost") ||
+    q.includes("pricing") ||
+    q.includes("how much")
+  ) {
+    return "Our pricing depends on your needs. We offer Starter, Growth, and Enterprise plans. Please visit the Services page or contact us for a custom quote!";
+  }
+  if (q.includes("on-page") || q.includes("on page")) {
+    return "On-Page SEO involves optimizing your website's content, titles, meta descriptions, headings, and internal links to rank higher in search engines.";
+  }
+  if (
+    q.includes("off-page") ||
+    q.includes("off page") ||
+    q.includes("backlink") ||
+    q.includes("link building")
+  ) {
+    return "Off-Page SEO focuses on building high-quality backlinks from authoritative sites to improve your website's domain authority and rankings.";
+  }
+  if (
+    q.includes("technical seo") ||
+    q.includes("site speed") ||
+    q.includes("core web vitals")
+  ) {
+    return "Technical SEO ensures your website is fast, secure, mobile-friendly, and free of crawl errors — giving search engines the best chance to index your pages.";
+  }
+  if (
+    q.includes("local seo") ||
+    q.includes("google my business") ||
+    q.includes("local")
+  ) {
+    return "Local SEO helps your business appear in local search results and Google Maps, driving nearby customers to your door.";
+  }
+  if (q.includes("keyword") || q.includes("keyword research")) {
+    return "Keyword research identifies the exact terms your target audience uses, so we can create content that ranks and converts.";
+  }
+  if (
+    q.includes("how long") ||
+    q.includes("time") ||
+    q.includes("result") ||
+    q.includes("when")
+  ) {
+    return "SEO typically takes 3–6 months to show significant results. The timeline depends on competition, your current site health, and the strategies applied.";
+  }
+  if (q.includes("audit") || q.includes("free")) {
+    return "We offer a Free SEO Audit! Visit the Contact page or click the Free SEO Audit link in the footer to get started.";
+  }
+  if (
+    q.includes("contact") ||
+    q.includes("reach") ||
+    q.includes("call") ||
+    q.includes("phone")
+  ) {
+    return "You can reach us at +977 9868730337 or visit our Contact page. We're based in Baneshwor, Kathmandu and serve clients worldwide.";
+  }
+  if (
+    q.includes("seo") ||
+    q.includes("search engine") ||
+    q.includes("rank") ||
+    q.includes("traffic") ||
+    q.includes("organic")
+  ) {
+    return "SEO (Search Engine Optimization) is the process of improving your website's visibility on Google. We specialize in On-Page, Off-Page, Technical, Local SEO, and Keyword Research.";
+  }
+  if (
+    q.includes("hello") ||
+    q.includes("hi") ||
+    q.includes("hey") ||
+    q.includes("good")
+  ) {
+    return "Hello! I'm your RankPro SEO Assistant. Ask me anything about SEO strategies, our services, or how to improve your website's ranking!";
+  }
+  return "Thanks for your question! For personalized SEO advice, please contact us at +977 9868730337 or use the Contact page. We'd love to help you grow your website!";
+}
+
 export default function ChatBot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [initialized, setInitialized] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messageCount = messages.length;
   const { actor } = useActor();
-
-  // Keep a rolling history for context (last 10 messages)
-  const historyRef = useRef<{ role: string; content: string }[]>([]);
 
   function openChat() {
     if (!initialized) {
       setMessages([
         {
           id: nextId(),
-          text: "Hi! I'm your SEO Assistant powered by AI. Ask me anything about SEO or our services!",
+          text: "Hi! I'm your SEO Assistant. Ask me anything about SEO or our services!",
           from: "bot",
         },
       ]);
@@ -49,72 +122,33 @@ export default function ChatBot() {
 
   async function sendMessage() {
     const text = input.trim();
-    if (!text || isLoading || !actor) return;
+    if (!text) return;
 
     const userMsg: Message = { id: nextId(), text, from: "user" };
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
-    setIsLoading(true);
 
-    // Add to history
-    historyRef.current = [
-      ...historyRef.current.slice(-9),
-      { role: "user", content: text },
-    ];
+    const botReply = getBotReply(text);
+    const botMsg: Message = { id: nextId(), text: botReply, from: "bot" };
+    setMessages((prev) => [...prev, botMsg]);
 
-    try {
-      // Build history JSON string for backend (comma-prefixed objects, or empty string)
-      const historyJsonStr =
-        historyRef.current.length > 1
-          ? `,${historyRef.current
-              .slice(0, -1)
-              .map(
-                (m) =>
-                  `{"role":"${m.role}","content":${JSON.stringify(m.content)}}`,
-              )
-              .join(",")}`
-          : "";
-
-      // Call backend askOpenAI via HTTP outcalls proxy
-      // biome-ignore lint/suspicious/noExplicitAny: askOpenAI added in backend but not yet in generated types
-      const botReply = (await (actor as any).askOpenAI(
-        text,
-        historyJsonStr,
-      )) as string;
-
-      historyRef.current = [
-        ...historyRef.current,
-        { role: "assistant", content: botReply },
-      ];
-
-      const botMsg: Message = { id: nextId(), text: botReply, from: "bot" };
-      setMessages((prev) => [...prev, botMsg]);
-
-      // Log silently
+    // Log silently to backend and localStorage
+    if (actor) {
       actor.logChatbotMessage(text, botReply).catch(() => {});
-      try {
-        const existing = JSON.parse(
-          localStorage.getItem("rankpro_chatbot_logs") ?? "[]",
-        );
-        existing.push({
-          id: Date.now(),
-          question: text,
-          answer: botReply,
-          timestamp: Date.now(),
-        });
-        localStorage.setItem("rankpro_chatbot_logs", JSON.stringify(existing));
-      } catch {
-        /* ignore */
-      }
+    }
+    try {
+      const existing = JSON.parse(
+        localStorage.getItem("rankpro_chatbot_logs") ?? "[]",
+      );
+      existing.push({
+        id: Date.now(),
+        question: text,
+        answer: botReply,
+        timestamp: Date.now(),
+      });
+      localStorage.setItem("rankpro_chatbot_logs", JSON.stringify(existing));
     } catch {
-      const errMsg: Message = {
-        id: nextId(),
-        text: "Sorry, I'm having trouble connecting right now. Please try again or contact us directly at +977 9868730337.",
-        from: "bot",
-      };
-      setMessages((prev) => [...prev, errMsg]);
-    } finally {
-      setIsLoading(false);
+      /* ignore */
     }
   }
 
@@ -127,7 +161,7 @@ export default function ChatBot() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally scroll when message count changes
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messageCount, isLoading]);
+  }, [messageCount]);
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -158,7 +192,7 @@ export default function ChatBot() {
                   <p className="text-white font-semibold text-sm">
                     SEO Assistant
                   </p>
-                  <p className="text-green-300 text-xs">&#9679; AI-Powered</p>
+                  <p className="text-green-300 text-xs">&#9679; Online</p>
                 </div>
               </div>
               <button
@@ -191,32 +225,6 @@ export default function ChatBot() {
                   </div>
                 </div>
               ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-white text-gray-400 px-3 py-2 rounded-2xl rounded-bl-sm shadow-sm border border-gray-100 text-sm">
-                    <span className="inline-flex gap-1">
-                      <span
-                        className="animate-bounce"
-                        style={{ animationDelay: "0ms" }}
-                      >
-                        ●
-                      </span>
-                      <span
-                        className="animate-bounce"
-                        style={{ animationDelay: "150ms" }}
-                      >
-                        ●
-                      </span>
-                      <span
-                        className="animate-bounce"
-                        style={{ animationDelay: "300ms" }}
-                      >
-                        ●
-                      </span>
-                    </span>
-                  </div>
-                </div>
-              )}
               <div ref={messagesEndRef} />
             </div>
 
@@ -228,16 +236,15 @@ export default function ChatBot() {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about SEO..."
-                disabled={isLoading}
                 data-ocid="chatbot.input"
-                className="flex-1 text-sm px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#38C98A]/40 focus:border-[#38C98A] bg-gray-50 disabled:opacity-60"
+                className="flex-1 text-sm px-3 py-2 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#38C98A]/40 focus:border-[#38C98A] bg-gray-50"
               />
               <button
                 type="button"
                 onClick={() => {
                   void sendMessage();
                 }}
-                disabled={!input.trim() || isLoading || !actor}
+                disabled={!input.trim()}
                 data-ocid="chatbot.submit_button"
                 className="w-9 h-9 rounded-full flex items-center justify-center text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
                 style={{ background: "#38C98A" }}
