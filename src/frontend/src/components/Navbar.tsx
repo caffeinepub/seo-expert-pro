@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import SearchBar from "./SearchBar";
 
-const NAV_BG = "#0a1628";
+const NAV_BG = "#0B2A43";
 
 const servicesDropdown = [
   { label: "On-Page SEO", desc: "Optimize content, meta tags & structure" },
@@ -144,7 +144,7 @@ export default function Navbar() {
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "shadow-[0_4px_24px_rgba(0,0,0,0.35)] border-b border-white/10"
+          ? "shadow-[0_4px_24px_rgba(11,42,67,0.5)] border-b border-white/10"
           : "border-b border-white/10"
       }`}
       style={{ background: NAV_BG }}
@@ -158,7 +158,7 @@ export default function Navbar() {
             data-ocid="nav.link"
           >
             <img
-              src="/assets/uploads/logos-1.png"
+              src="/assets/logos-1.png"
               alt="RankPro Logo"
               className="h-14 w-auto object-contain block rounded-tl-xl rounded-bl-xl rounded-br-xl"
               loading="eager"
