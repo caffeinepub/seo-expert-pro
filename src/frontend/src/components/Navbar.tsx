@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import SearchBar from "./SearchBar";
 
-const NAV_BG = "#0F3460";
+const NAV_BG = "#0B2A43";
 
 const servicesDropdown = [
   { label: "On-Page SEO", desc: "Optimize content, meta tags & structure" },
@@ -66,7 +66,7 @@ function NavDropdown({
       <Link
         to={to}
         data-ocid="nav.link"
-        className="relative px-3 py-2 text-[15px] font-medium group flex items-center gap-1"
+        className="relative px-3 py-2 text-sm font-medium group flex items-center gap-1"
       >
         <span
           className={`transition-colors duration-200 ${isActive ? "text-white font-semibold" : "text-white/70"} group-hover:text-white`}
@@ -142,9 +142,9 @@ export default function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-all duration-300 rounded-b-2xl ${
+      className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "shadow-[0_4px_24px_rgba(15,52,96,0.5)] border-b border-white/10"
+          ? "shadow-[0_4px_24px_rgba(11,42,67,0.5)] border-b border-white/10"
           : "border-b border-white/10"
       }`}
       style={{ background: NAV_BG }}
@@ -178,7 +178,7 @@ export default function Navbar() {
             <Link
               to="/"
               data-ocid="nav.link"
-              className="relative px-3 py-2 text-[15px] font-medium group"
+              className="relative px-3 py-2 text-sm font-medium group"
             >
               <span
                 className={`transition-colors duration-200 ${
@@ -219,7 +219,7 @@ export default function Navbar() {
                   key={l.to}
                   to={l.to}
                   data-ocid="nav.link"
-                  className="relative px-3 py-2 text-[15px] font-medium group"
+                  className="relative px-3 py-2 text-sm font-medium group"
                 >
                   <span
                     className={`transition-colors duration-200 ${
