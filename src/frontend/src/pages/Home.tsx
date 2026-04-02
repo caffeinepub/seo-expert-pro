@@ -244,7 +244,20 @@ export default function Home() {
   }, [backend]);
 
   useEffect(() => {
-    loadData();
+    // Defer backend calls until the browser is idle so they don't block render
+    const load = () => {
+      loadData();
+    };
+    if ("requestIdleCallback" in window) {
+      const id = (window as Window & typeof globalThis).requestIdleCallback(
+        load,
+        { timeout: 3000 },
+      );
+      return () =>
+        (window as Window & typeof globalThis).cancelIdleCallback(id);
+    }
+    const t = setTimeout(load, 3000);
+    return () => clearTimeout(t);
   }, [loadData]);
 
   const displayFaqs = faqs.length > 0 ? faqs.slice(0, 8) : defaultFaqs;

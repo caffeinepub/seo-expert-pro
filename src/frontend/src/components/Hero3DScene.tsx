@@ -227,8 +227,14 @@ export default function Hero3DScene() {
     >
       <Canvas
         camera={{ position: [0, 0, 6.5], fov: 48 }}
-        gl={{ alpha: true, antialias: false }}
+        gl={{
+          alpha: true,
+          antialias: false,
+          powerPreference: "high-performance",
+        }}
         dpr={[1, 1.5]}
+        performance={{ min: 0.5 }}
+        frameloop="always"
         flat
         style={{ background: "transparent", width: "100%", height: "100%" }}
       >

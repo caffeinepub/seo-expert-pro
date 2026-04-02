@@ -4,7 +4,7 @@ import {
   createRoute,
   createRouter,
 } from "@tanstack/react-router";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import ChatBot from "./components/ChatBot";
 
 // Lazy-load every page so only the current page's JS is fetched on first visit
@@ -145,11 +145,34 @@ declare module "@tanstack/react-router" {
   }
 }
 
+function PrefetchPages() {
+  useEffect(() => {
+    // Prefetch the most common next pages after a short idle delay
+    const load = () => {
+      import("./pages/Services");
+      import("./pages/Blog");
+      import("./pages/Contact");
+    };
+    if ("requestIdleCallback" in window) {
+      const id = (window as Window & typeof globalThis).requestIdleCallback(
+        load,
+        { timeout: 3000 },
+      );
+      return () =>
+        (window as Window & typeof globalThis).cancelIdleCallback(id);
+    }
+    const t = setTimeout(load, 2000);
+    return () => clearTimeout(t);
+  }, []);
+  return null;
+}
+
 export default function App() {
   return (
     <>
       <RouterProvider router={router} />
       <ChatBot />
+      <PrefetchPages />
     </>
   );
 }

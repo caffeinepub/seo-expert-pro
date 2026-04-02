@@ -2,6 +2,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta http-equiv="Cache-Control" content="max-age=31536000, immutable" />
     <title>RankPro SEO – Expert SEO Services</title>
     <meta name="description" content="RankPro SEO – Data-driven SEO strategies that deliver real rankings, traffic, and revenue. Get your free SEO audit today." />
 
@@ -12,8 +13,15 @@
     <!-- Preload critical logo so it appears immediately -->
     <link rel="preload" as="image" href="/assets/logos-1.png" fetchpriority="high" />
 
+    <!-- Preconnect to ICP network for faster backend calls -->
+    <link rel="preconnect" href="https://icp-api.io" />
+    <link rel="dns-prefetch" href="https://icp-api.io" />
+
     <!-- DNS prefetch for any external resources -->
     <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+
+    <!-- Module preload the main entry chunk -->
+    <link rel="modulepreload" href="/src/main.tsx" />
 
     <!-- Inline critical CSS: prevent flash of unstyled content -->
     <style>

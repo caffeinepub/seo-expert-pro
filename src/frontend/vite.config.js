@@ -17,12 +17,24 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     sourcemap: false,
-    minify: false,
+    minify: 'esbuild',
+    target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom'],
+          'vendor-three': ['three', '@react-three/fiber', '@react-three/drei'],
+          'vendor-router': ['@tanstack/react-router', '@tanstack/react-query'],
+          'vendor-dfinity': ['@dfinity/agent', '@dfinity/candid', '@dfinity/principal'],
+        },
+      },
+    },
   },
   css: {
     postcss: "./postcss.config.js",
   },
   optimizeDeps: {
+    include: ['react', 'react-dom', 'three'],
     esbuildOptions: {
       define: {
         global: "globalThis",
