@@ -770,90 +770,418 @@ function HeroBlogCanvas() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(canvas.clientWidth, canvas.clientHeight);
     renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
 
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(
-      60,
+      75,
       canvas.clientWidth / canvas.clientHeight,
       0.1,
       100,
     );
-    camera.position.z = 5;
+    camera.position.z = 7;
 
-    // Icosahedrons
-    const icoGeo = new THREE.IcosahedronGeometry(0.7, 0);
-    const icoMat = new THREE.MeshBasicMaterial({
+    // Lighting for MeshStandardMaterial shapes
+    const ambientLight = new THREE.AmbientLight(0x38c98a, 0.4);
+    scene.add(ambientLight);
+    const pointLight1 = new THREE.PointLight(0x38c98a, 2.5, 20);
+    pointLight1.position.set(-4, 3, 3);
+    scene.add(pointLight1);
+    const pointLight2 = new THREE.PointLight(0x00d4ff, 2.0, 18);
+    pointLight2.position.set(5, -2, 4);
+    scene.add(pointLight2);
+    const pointLight3 = new THREE.PointLight(0x4f8ef7, 1.5, 15);
+    pointLight3.position.set(0, -4, 2);
+    scene.add(pointLight3);
+
+    const allMeshes: THREE.Mesh[] = [];
+    const allGeos: THREE.BufferGeometry[] = [];
+    const allMats: THREE.Material[] = [];
+
+    // ─── CENTER AMBIENT: large faint icosphere behind text ───────────────────
+    const bgIcoGeo = new THREE.IcosahedronGeometry(2.5, 1);
+    const bgIcoMat = new THREE.MeshBasicMaterial({
       color: 0x38c98a,
       wireframe: true,
+      transparent: true,
+      opacity: 0.05,
+    });
+    const bgIco = new THREE.Mesh(bgIcoGeo, bgIcoMat);
+    bgIco.position.set(0, 0, -3);
+    scene.add(bgIco);
+    allGeos.push(bgIcoGeo);
+    allMats.push(bgIcoMat);
+
+    // ─── TOP EDGE: 4 floating icosahedrons spread horizontally ───────────────
+    const topIcoGeo = new THREE.IcosahedronGeometry(0.7, 0);
+    allGeos.push(topIcoGeo);
+    const topIcoData: {
+      x: number;
+      y: number;
+      scale: number;
+      color: number;
+      phase: number;
+      rSpeed: [number, number];
+    }[] = [
+      {
+        x: -5.5,
+        y: 2.8,
+        scale: 0.65,
+        color: 0x38c98a,
+        phase: 0.0,
+        rSpeed: [0.004, 0.006],
+      },
+      {
+        x: -2.0,
+        y: 3.3,
+        scale: 0.8,
+        color: 0x00d4ff,
+        phase: 1.2,
+        rSpeed: [0.006, 0.003],
+      },
+      {
+        x: 2.0,
+        y: 3.1,
+        scale: 0.7,
+        color: 0x38c98a,
+        phase: 2.4,
+        rSpeed: [0.003, 0.007],
+      },
+      {
+        x: 5.5,
+        y: 2.7,
+        scale: 0.6,
+        color: 0x4f8ef7,
+        phase: 0.7,
+        rSpeed: [0.005, 0.004],
+      },
+    ];
+    const topIcos: { mesh: THREE.Mesh; phase: number; baseY: number }[] = [];
+    for (const d of topIcoData) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: d.color,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.55,
+      });
+      allMats.push(mat);
+      const m = new THREE.Mesh(topIcoGeo, mat);
+      m.position.set(d.x, d.y, -1.0);
+      m.scale.setScalar(d.scale);
+      // Store rotation speeds in userData
+      m.userData = { rX: d.rSpeed[0], rY: d.rSpeed[1] };
+      scene.add(m);
+      allMeshes.push(m);
+      topIcos.push({ mesh: m, phase: d.phase, baseY: d.y });
+    }
+
+    // ─── BOTTOM EDGE: 3 torus knot shapes ────────────────────────────────────
+    const botTkGeo = new THREE.TorusKnotGeometry(0.45, 0.13, 64, 8, 2, 3);
+    allGeos.push(botTkGeo);
+    const botKnotData: {
+      x: number;
+      y: number;
+      scale: number;
+      color: number;
+      phase: number;
+    }[] = [
+      { x: -4.0, y: -3.0, scale: 0.9, color: 0x00d4ff, phase: 0.0 },
+      { x: 0.5, y: -3.2, scale: 1.05, color: 0x38c98a, phase: 1.6 },
+      { x: 4.5, y: -2.8, scale: 0.85, color: 0x4f8ef7, phase: 3.0 },
+    ];
+    const botKnots: { mesh: THREE.Mesh; phase: number; baseY: number }[] = [];
+    for (const d of botKnotData) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: d.color,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.45,
+      });
+      allMats.push(mat);
+      const m = new THREE.Mesh(botTkGeo, mat);
+      m.position.set(d.x, d.y, -1.5);
+      m.scale.setScalar(d.scale);
+      scene.add(m);
+      allMeshes.push(m);
+      botKnots.push({ mesh: m, phase: d.phase, baseY: d.y });
+    }
+
+    // ─── LEFT SIDE: vertical cluster of octahedrons ──────────────────────────
+    const octGeo = new THREE.OctahedronGeometry(0.4, 0);
+    allGeos.push(octGeo);
+    const leftOctData: {
+      x: number;
+      y: number;
+      scale: number;
+      phase: number;
+    }[] = [
+      { x: -6.2, y: 2.0, scale: 0.75, phase: 0.0 },
+      { x: -5.8, y: 0.2, scale: 0.6, phase: 1.0 },
+      { x: -6.4, y: -1.5, scale: 0.8, phase: 2.2 },
+      { x: -5.5, y: -2.8, scale: 0.55, phase: 3.5 },
+    ];
+    const leftOcts: { mesh: THREE.Mesh; phase: number; baseY: number }[] = [];
+    for (const d of leftOctData) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x38c98a,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5,
+      });
+      allMats.push(mat);
+      const m = new THREE.Mesh(octGeo, mat);
+      m.position.set(d.x, d.y, -0.5);
+      m.scale.setScalar(d.scale);
+      scene.add(m);
+      allMeshes.push(m);
+      leftOcts.push({ mesh: m, phase: d.phase, baseY: d.y });
+    }
+
+    // Left side particles streaming upward
+    const leftPartCount = 50;
+    const leftPartPos = new Float32Array(leftPartCount * 3);
+    for (let i = 0; i < leftPartCount; i++) {
+      leftPartPos[i * 3] = -6.5 + Math.random() * 1.5;
+      leftPartPos[i * 3 + 1] = (Math.random() - 0.5) * 7;
+      leftPartPos[i * 3 + 2] = (Math.random() - 0.5) * 2;
+    }
+    const leftPartGeo = new THREE.BufferGeometry();
+    leftPartGeo.setAttribute(
+      "position",
+      new THREE.BufferAttribute(leftPartPos, 3),
+    );
+    allGeos.push(leftPartGeo);
+    const leftPartMat = new THREE.PointsMaterial({
+      color: 0x38c98a,
+      size: 0.06,
+      transparent: true,
+      opacity: 0.65,
+    });
+    allMats.push(leftPartMat);
+    const leftParticles = new THREE.Points(leftPartGeo, leftPartMat);
+    scene.add(leftParticles);
+
+    // ─── RIGHT SIDE: wireframe spheres + dodecahedrons ───────────────────────
+    const rightSphGeo = new THREE.SphereGeometry(0.35, 12, 8);
+    allGeos.push(rightSphGeo);
+    const rightSphData: {
+      x: number;
+      y: number;
+      scale: number;
+      phase: number;
+      filled: boolean;
+    }[] = [
+      { x: 6.0, y: 2.2, scale: 0.85, phase: 0.5, filled: false },
+      { x: 6.5, y: 0.5, scale: 0.7, phase: 1.8, filled: true },
+      { x: 5.8, y: -1.2, scale: 0.9, phase: 0.9, filled: false },
+    ];
+    const rightSphs: { mesh: THREE.Mesh; phase: number; baseY: number }[] = [];
+    for (const d of rightSphData) {
+      let mat: THREE.Material;
+      if (d.filled) {
+        mat = new THREE.MeshStandardMaterial({
+          color: 0x00d4ff,
+          emissive: 0x004466,
+          emissiveIntensity: 0.6,
+          transparent: true,
+          opacity: 0.35,
+          roughness: 0.3,
+          metalness: 0.8,
+        });
+      } else {
+        mat = new THREE.MeshBasicMaterial({
+          color: 0x00d4ff,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.55,
+        });
+      }
+      allMats.push(mat);
+      const m = new THREE.Mesh(rightSphGeo, mat);
+      m.position.set(d.x, d.y, -0.8);
+      m.scale.setScalar(d.scale);
+      scene.add(m);
+      allMeshes.push(m);
+      rightSphs.push({ mesh: m, phase: d.phase, baseY: d.y });
+    }
+
+    const dodecGeo = new THREE.DodecahedronGeometry(0.38, 0);
+    allGeos.push(dodecGeo);
+    const rightDodecData: {
+      x: number;
+      y: number;
+      scale: number;
+      phase: number;
+    }[] = [
+      { x: 6.3, y: -2.2, scale: 0.8, phase: 2.3 },
+      { x: 5.5, y: 3.0, scale: 0.65, phase: 4.1 },
+    ];
+    const rightDodecs: { mesh: THREE.Mesh; phase: number; baseY: number }[] =
+      [];
+    for (const d of rightDodecData) {
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x4f8ef7,
+        wireframe: true,
+        transparent: true,
+        opacity: 0.5,
+      });
+      allMats.push(mat);
+      const m = new THREE.Mesh(dodecGeo, mat);
+      m.position.set(d.x, d.y, -0.6);
+      m.scale.setScalar(d.scale);
+      scene.add(m);
+      allMeshes.push(m);
+      rightDodecs.push({ mesh: m, phase: d.phase, baseY: d.y });
+    }
+
+    // ─── 3 filled semi-transparent spheres for visual richness ───────────────
+    const richSphGeo = new THREE.SphereGeometry(0.5, 32, 16);
+    allGeos.push(richSphGeo);
+    const richSphData: {
+      x: number;
+      y: number;
+      z: number;
+      color: number;
+      emissive: number;
+      phase: number;
+    }[] = [
+      {
+        x: -3.5,
+        y: 2.5,
+        z: -2.5,
+        color: 0x38c98a,
+        emissive: 0x0a3322,
+        phase: 0.3,
+      },
+      {
+        x: 4.0,
+        y: -2.5,
+        z: -2.0,
+        color: 0x00d4ff,
+        emissive: 0x001a33,
+        phase: 1.9,
+      },
+      {
+        x: -1.5,
+        y: -2.0,
+        z: -3.0,
+        color: 0x4f8ef7,
+        emissive: 0x0a1a44,
+        phase: 3.3,
+      },
+    ];
+    const richSphs: { mesh: THREE.Mesh; phase: number; baseY: number }[] = [];
+    for (const d of richSphData) {
+      const mat = new THREE.MeshStandardMaterial({
+        color: d.color,
+        emissive: d.emissive,
+        emissiveIntensity: 0.8,
+        transparent: true,
+        opacity: 0.22,
+        roughness: 0.2,
+        metalness: 0.9,
+      });
+      allMats.push(mat);
+      const m = new THREE.Mesh(richSphGeo, mat);
+      m.position.set(d.x, d.y, d.z);
+      scene.add(m);
+      allMeshes.push(m);
+      richSphs.push({ mesh: m, phase: d.phase, baseY: d.y });
+    }
+
+    // ─── BACKGROUND: dense particle field ────────────────────────────────────
+    const bgPartCount = 300;
+    const bgPosArr = new Float32Array(bgPartCount * 3);
+    for (let i = 0; i < bgPartCount; i++) {
+      bgPosArr[i * 3] = (Math.random() - 0.5) * 16;
+      bgPosArr[i * 3 + 1] = (Math.random() - 0.5) * 10;
+      bgPosArr[i * 3 + 2] = (Math.random() - 0.5) * 5 - 2;
+    }
+    const bgPartGeo = new THREE.BufferGeometry();
+    bgPartGeo.setAttribute("position", new THREE.BufferAttribute(bgPosArr, 3));
+    allGeos.push(bgPartGeo);
+    const bgPartMat = new THREE.PointsMaterial({
+      color: 0x38c98a,
+      size: 0.032,
       transparent: true,
       opacity: 0.35,
     });
-    const icos: THREE.Mesh[] = [];
-    const icoPositions: [number, number, number][] = [
-      [-3, 1.5, -1],
-      [3, -1, -2],
-      [-4, -1.5, -2],
-    ];
-    for (const pos of icoPositions) {
-      const m = new THREE.Mesh(icoGeo, icoMat.clone());
-      m.position.set(...pos);
-      m.scale.setScalar(0.3 + Math.random() * 0.35);
-      scene.add(m);
-      icos.push(m);
-    }
+    allMats.push(bgPartMat);
+    const bgParticles = new THREE.Points(bgPartGeo, bgPartMat);
+    scene.add(bgParticles);
 
-    // Torus wireframes
-    const torGeo = new THREE.TorusGeometry(0.6, 0.2, 8, 24);
-    const torMat = new THREE.MeshBasicMaterial({
-      color: 0x00d4ff,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.2,
-    });
-    const tori: THREE.Mesh[] = [];
-    const torPositions: [number, number, number][] = [
-      [2.5, 1.5, -2],
-      [-2, -1, -1.5],
-    ];
-    for (const pos of torPositions) {
-      const m = new THREE.Mesh(torGeo, torMat.clone());
-      m.position.set(...pos);
-      m.scale.setScalar(0.4 + Math.random() * 0.3);
-      scene.add(m);
-      tori.push(m);
-    }
-
-    // Particles
-    const partCount = 100;
-    const posArr = new Float32Array(partCount * 3);
-    for (let i = 0; i < partCount * 3; i++)
-      posArr[i] = (Math.random() - 0.5) * 10;
-    const partGeo = new THREE.BufferGeometry();
-    partGeo.setAttribute("position", new THREE.BufferAttribute(posArr, 3));
-    const partMat = new THREE.PointsMaterial({
-      color: 0x38c98a,
-      size: 0.045,
-      transparent: true,
-      opacity: 0.5,
-    });
-    const particles = new THREE.Points(partGeo, partMat);
-    scene.add(particles);
-
+    // ─── ANIMATION ───────────────────────────────────────────────────────────
     let frame = 0;
     let animId: number;
     const animate = () => {
       animId = requestAnimationFrame(animate);
       frame += 0.005;
-      for (let i = 0; i < icos.length; i++) {
-        icos[i].rotation.x += 0.003;
-        icos[i].rotation.y += 0.004;
-        icos[i].position.y += Math.sin(frame + i) * 0.002;
+
+      // Background icosphere slow rotation
+      bgIco.rotation.x += 0.0008;
+      bgIco.rotation.y += 0.0012;
+
+      // Top icosahedrons: slow rotation + sine bob
+      for (let i = 0; i < topIcos.length; i++) {
+        const { mesh, phase, baseY } = topIcos[i];
+        mesh.rotation.x += mesh.userData.rX as number;
+        mesh.rotation.y += mesh.userData.rY as number;
+        mesh.position.y = baseY + Math.sin(frame * 0.9 + phase) * 0.15;
       }
-      for (let i = 0; i < tori.length; i++) {
-        tori[i].rotation.x += 0.002;
-        tori[i].rotation.z += 0.003;
+
+      // Bottom torus knots: rotation + bob
+      for (let i = 0; i < botKnots.length; i++) {
+        const { mesh, phase, baseY } = botKnots[i];
+        mesh.rotation.x += 0.004 + i * 0.001;
+        mesh.rotation.y += 0.003 + i * 0.0015;
+        mesh.rotation.z += 0.002;
+        mesh.position.y = baseY + Math.sin(frame * 0.7 + phase) * 0.18;
       }
-      particles.rotation.y += 0.0006;
+
+      // Left octahedrons: spin + drift
+      for (let i = 0; i < leftOcts.length; i++) {
+        const { mesh, phase, baseY } = leftOcts[i];
+        mesh.rotation.x += 0.005 + i * 0.001;
+        mesh.rotation.z += 0.004 + i * 0.0012;
+        mesh.position.y = baseY + Math.sin(frame * 1.1 + phase) * 0.12;
+      }
+
+      // Left particles: drift upward and wrap
+      const lPos = leftPartGeo.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < leftPartCount; i++) {
+        lPos.array[i * 3 + 1] = (lPos.array[i * 3 + 1] as number) + 0.008;
+        if ((lPos.array[i * 3 + 1] as number) > 4) lPos.array[i * 3 + 1] = -4;
+      }
+      lPos.needsUpdate = true;
+
+      // Right spheres: bob + spin
+      for (let i = 0; i < rightSphs.length; i++) {
+        const { mesh, phase, baseY } = rightSphs[i];
+        mesh.rotation.x += 0.003 + i * 0.002;
+        mesh.rotation.y += 0.005 + i * 0.001;
+        mesh.position.y = baseY + Math.sin(frame * 0.8 + phase) * 0.14;
+      }
+
+      // Right dodecahedrons: spin + bob
+      for (let i = 0; i < rightDodecs.length; i++) {
+        const { mesh, phase, baseY } = rightDodecs[i];
+        mesh.rotation.x += 0.004;
+        mesh.rotation.y += 0.006 + i * 0.002;
+        mesh.position.y = baseY + Math.sin(frame * 1.3 + phase) * 0.16;
+      }
+
+      // Rich filled spheres: slow drift
+      for (let i = 0; i < richSphs.length; i++) {
+        const { mesh, phase, baseY } = richSphs[i];
+        mesh.rotation.y += 0.003;
+        mesh.position.y = baseY + Math.sin(frame * 0.5 + phase) * 0.1;
+      }
+
+      // Background particles: slow overall rotation + drift
+      bgParticles.rotation.y += 0.0004;
+      bgParticles.rotation.x += 0.0002;
+
       renderer.render(scene, camera);
     };
     animate();
@@ -869,12 +1197,11 @@ function HeroBlogCanvas() {
     return () => {
       cancelAnimationFrame(animId);
       window.removeEventListener("resize", handleResize);
-      icoGeo.dispose();
-      torGeo.dispose();
-      partGeo.dispose();
-      icoMat.dispose();
-      torMat.dispose();
-      partMat.dispose();
+      for (const g of allGeos) g.dispose();
+      for (const m of allMats) m.dispose();
+      bgIco.geometry.dispose();
+      leftPartGeo.dispose();
+      bgPartGeo.dispose();
       renderer.dispose();
     };
   }, []);
@@ -1337,21 +1664,47 @@ export default function Blog() {
           position: "relative",
           overflow: "hidden",
           background: "linear-gradient(135deg, #0B2A43 0%, #071c2e 100%)",
-          padding: "100px 0 80px",
+          padding: "120px 0 100px",
         }}
       >
         <HeroBlogCanvas />
-        {/* Glow accent */}
+        {/* Top-left glow */}
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "400px",
+            height: "400px",
+            background:
+              "radial-gradient(circle, rgba(56,201,138,0.12) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
+        {/* Bottom-right glow */}
+        <div
+          style={{
+            position: "absolute",
+            bottom: 0,
+            right: 0,
+            width: "500px",
+            height: "300px",
+            background:
+              "radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%)",
+            pointerEvents: "none",
+          }}
+        />
+        {/* Center glow accent */}
         <div
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            width: "600px",
-            height: "300px",
+            width: "700px",
+            height: "350px",
             background:
-              "radial-gradient(ellipse, rgba(56,201,138,0.08) 0%, transparent 70%)",
+              "radial-gradient(ellipse, rgba(56,201,138,0.06) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
