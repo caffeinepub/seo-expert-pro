@@ -786,20 +786,18 @@ function HeroBlogCanvas() {
       color: 0x38c98a,
       wireframe: true,
       transparent: true,
-      opacity: 0.5,
+      opacity: 0.35,
     });
     const icos: THREE.Mesh[] = [];
     const icoPositions: [number, number, number][] = [
       [-3, 1.5, -1],
       [3, -1, -2],
-      [-1.5, -2, -1],
-      [4, 2, -3],
       [-4, -1.5, -2],
     ];
     for (const pos of icoPositions) {
       const m = new THREE.Mesh(icoGeo, icoMat.clone());
       m.position.set(...pos);
-      m.scale.setScalar(0.4 + Math.random() * 0.5);
+      m.scale.setScalar(0.3 + Math.random() * 0.35);
       scene.add(m);
       icos.push(m);
     }
@@ -810,34 +808,33 @@ function HeroBlogCanvas() {
       color: 0x00d4ff,
       wireframe: true,
       transparent: true,
-      opacity: 0.3,
+      opacity: 0.2,
     });
     const tori: THREE.Mesh[] = [];
     const torPositions: [number, number, number][] = [
       [2.5, 1.5, -2],
       [-2, -1, -1.5],
-      [0, 2.5, -3],
     ];
     for (const pos of torPositions) {
       const m = new THREE.Mesh(torGeo, torMat.clone());
       m.position.set(...pos);
-      m.scale.setScalar(0.5 + Math.random() * 0.4);
+      m.scale.setScalar(0.4 + Math.random() * 0.3);
       scene.add(m);
       tori.push(m);
     }
 
     // Particles
-    const partCount = 200;
+    const partCount = 100;
     const posArr = new Float32Array(partCount * 3);
     for (let i = 0; i < partCount * 3; i++)
-      posArr[i] = (Math.random() - 0.5) * 14;
+      posArr[i] = (Math.random() - 0.5) * 10;
     const partGeo = new THREE.BufferGeometry();
     partGeo.setAttribute("position", new THREE.BufferAttribute(posArr, 3));
     const partMat = new THREE.PointsMaterial({
       color: 0x38c98a,
-      size: 0.06,
+      size: 0.045,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.5,
     });
     const particles = new THREE.Points(partGeo, partMat);
     scene.add(particles);
@@ -848,15 +845,15 @@ function HeroBlogCanvas() {
       animId = requestAnimationFrame(animate);
       frame += 0.005;
       for (let i = 0; i < icos.length; i++) {
-        icos[i].rotation.x += 0.004;
-        icos[i].rotation.y += 0.006;
+        icos[i].rotation.x += 0.003;
+        icos[i].rotation.y += 0.004;
         icos[i].position.y += Math.sin(frame + i) * 0.002;
       }
       for (let i = 0; i < tori.length; i++) {
-        tori[i].rotation.x += 0.003;
-        tori[i].rotation.z += 0.005;
+        tori[i].rotation.x += 0.002;
+        tori[i].rotation.z += 0.003;
       }
-      particles.rotation.y += 0.001;
+      particles.rotation.y += 0.0006;
       renderer.render(scene, camera);
     };
     animate();
@@ -1306,6 +1303,9 @@ function BlogGridParticles() {
 export default function Blog() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
+  const [subscribeEmail, setSubscribeEmail] = useState("");
+  const [subscribeSuccess, setSubscribeSuccess] = useState(false);
+  const [subscribeError, setSubscribeError] = useState("");
 
   useEffect(() => {
     const mapped: BlogPost[] = samplePosts.map((p, index) => ({
@@ -1351,7 +1351,7 @@ export default function Blog() {
             width: "600px",
             height: "300px",
             background:
-              "radial-gradient(ellipse, rgba(56,201,138,0.12) 0%, transparent 70%)",
+              "radial-gradient(ellipse, rgba(56,201,138,0.08) 0%, transparent 70%)",
             pointerEvents: "none",
           }}
         />
@@ -1984,6 +1984,11 @@ export default function Blog() {
               type="email"
               placeholder="Your email address"
               data-ocid="blog.input"
+              value={subscribeEmail}
+              onChange={(e) => {
+                setSubscribeEmail(e.target.value);
+                setSubscribeError("");
+              }}
               style={{
                 flex: 1,
                 background: "rgba(255,255,255,0.06)",
@@ -1998,6 +2003,42 @@ export default function Blog() {
             <button
               type="button"
               data-ocid="blog.submit_button"
+              onClick={() => {
+                const email = subscribeEmail.trim();
+                if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                  setSubscribeError("Please enter a valid email address.");
+                  return;
+                }
+                const existing = JSON.parse(
+                  localStorage.getItem("rankpro_subscribers") || "[]",
+                );
+                if (
+                  existing.some((e: { email: string }) => e.email === email)
+                ) {
+                  setSubscribeError("This email is already subscribed.");
+                  return;
+                }
+                existing.push({ email, timestamp: Date.now(), source: "blog" });
+                localStorage.setItem(
+                  "rankpro_subscribers",
+                  JSON.stringify(existing),
+                );
+                // Also save to blog page admin data
+                const blogData = JSON.parse(
+                  localStorage.getItem("rankpro_blog_interactions") || "[]",
+                );
+                blogData.push({
+                  type: "subscribe",
+                  email,
+                  timestamp: Date.now(),
+                });
+                localStorage.setItem(
+                  "rankpro_blog_interactions",
+                  JSON.stringify(blogData),
+                );
+                setSubscribeSuccess(true);
+                setSubscribeEmail("");
+              }}
               style={{
                 background: "linear-gradient(135deg, #38C98A, #00d4ff)",
                 color: "#071c2e",
@@ -2013,6 +2054,25 @@ export default function Blog() {
               Subscribe
             </button>
           </div>
+          {subscribeError && (
+            <p
+              style={{ color: "#ff6b6b", marginTop: "12px", fontSize: "14px" }}
+            >
+              {subscribeError}
+            </p>
+          )}
+          {subscribeSuccess && (
+            <p
+              style={{
+                color: "#38C98A",
+                marginTop: "12px",
+                fontSize: "15px",
+                fontWeight: 600,
+              }}
+            >
+              You're subscribed! Thanks for joining the RankPro community.
+            </p>
+          )}
         </div>
       </section>
 

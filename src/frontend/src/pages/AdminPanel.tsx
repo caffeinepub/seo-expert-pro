@@ -36,6 +36,7 @@ import {
   RefreshCw,
   Search,
   Shield,
+  Trash2,
   TrendingUp,
   User,
   Users,
@@ -701,12 +702,14 @@ function PageTabHeader({
   count,
   onExport,
   exportLabel = "Export CSV",
+  onClearAll,
 }: {
   title: string;
   subtitle: string;
   count: number;
   onExport: () => void;
   exportLabel?: string;
+  onClearAll?: () => void;
 }) {
   return (
     <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
@@ -718,6 +721,17 @@ function PageTabHeader({
         <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
           {count} entries
         </Badge>
+        {onClearAll && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onClearAll}
+            className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs"
+          >
+            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+            Clear All
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"
@@ -775,6 +789,14 @@ function Dashboard({
   isLoading,
   onRefresh,
   onLogout,
+  onDeleteContact,
+  onDeleteBlogView,
+  onDeletePageInteraction,
+  onDeleteChatbotLog,
+  onClearContacts,
+  onClearBlogViews,
+  onClearPageInteractions,
+  onClearChatbotLogs,
 }: {
   chatbotLogs: ChatbotLog[];
   localContacts: LocalContact[];
@@ -783,6 +805,14 @@ function Dashboard({
   isLoading: boolean;
   onRefresh: () => void;
   onLogout: () => void;
+  onDeleteContact: (contact: LocalContact) => void;
+  onDeleteBlogView: (index: number) => void;
+  onDeletePageInteraction: (index: number) => void;
+  onDeleteChatbotLog: (logId: bigint) => void;
+  onClearContacts: (filter: (c: LocalContact) => boolean) => void;
+  onClearBlogViews: () => void;
+  onClearPageInteractions: () => void;
+  onClearChatbotLogs: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -1159,6 +1189,13 @@ function Dashboard({
                   onExport={() =>
                     exportContacts(homeSubmissions, "home-submissions.csv")
                   }
+                  onClearAll={() =>
+                    onClearContacts(
+                      (c) =>
+                        c.source === "Home - Free SEO Audit" ||
+                        c.source === "Home - Lead Form",
+                    )
+                  }
                 />
                 <SearchBar
                   value={search}
@@ -1199,6 +1236,7 @@ function Dashboard({
                     emptyText="No audit requests yet"
                     ocidPrefix="admin.home.audit"
                     onRowClick={(c) => setSelectedContact(c)}
+                    onDelete={(c) => onDeleteContact(c)}
                   />
                 </div>
 
@@ -1243,6 +1281,7 @@ function Dashboard({
                     emptyText="No lead form submissions yet"
                     ocidPrefix="admin.home.lead"
                     onRowClick={(c) => setSelectedContact(c)}
+                    onDelete={(c) => onDeleteContact(c)}
                   />
                 </div>
               </motion.div>
@@ -1263,6 +1302,15 @@ function Dashboard({
                   count={filterContacts(serviceSubmissions).length}
                   onExport={() =>
                     exportContacts(serviceSubmissions, "service-quotes.csv")
+                  }
+                  onClearAll={() =>
+                    onClearContacts(
+                      (c) =>
+                        c.service != null &&
+                        c.source !== "Home - Free SEO Audit" &&
+                        c.source !== "Home - Lead Form" &&
+                        !c.caseStudy,
+                    )
                   }
                 />
                 <SearchBar
@@ -1296,6 +1344,7 @@ function Dashboard({
                   emptyText="No service quote requests yet"
                   ocidPrefix="admin.services"
                   onRowClick={(c) => setSelectedContact(c)}
+                  onDelete={(c) => onDeleteContact(c)}
                 />
               </motion.div>
             )}
@@ -1319,6 +1368,7 @@ function Dashboard({
                       "case-study-quotes.csv",
                     )
                   }
+                  onClearAll={() => onClearContacts((c) => c.caseStudy != null)}
                 />
                 <SearchBar
                   value={search}
@@ -1351,6 +1401,7 @@ function Dashboard({
                   emptyText="No case study quote requests yet"
                   ocidPrefix="admin.casestudies"
                   onRowClick={(c) => setSelectedContact(c)}
+                  onDelete={(c) => onDeleteContact(c)}
                 />
               </motion.div>
             )}
@@ -1380,6 +1431,7 @@ function Dashboard({
                       "blog-views.csv",
                     )
                   }
+                  onClearAll={onClearBlogViews}
                 />
                 <SearchBar
                   value={search}
@@ -1412,6 +1464,7 @@ function Dashboard({
                           <TableHead className="text-white/40 w-32">
                             Date Viewed
                           </TableHead>
+                          <TableHead className="text-white/40 w-8" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1441,6 +1494,19 @@ function Dashboard({
                             </TableCell>
                             <TableCell className="text-white/40 text-xs whitespace-nowrap">
                               {msToDateShort(b.tsMs)}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                data-ocid={`admin.blog.delete_button.${i + 1}`}
+                                onClick={() =>
+                                  onDeleteBlogView(blogViews.indexOf(b))
+                                }
+                                className="text-white/20 hover:text-red-400 transition-colors p-1 rounded"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1476,6 +1542,7 @@ function Dashboard({
                       "about-interactions.csv",
                     )
                   }
+                  onClearAll={onClearPageInteractions}
                 />
                 <div
                   data-ocid="admin.about.table"
@@ -1501,6 +1568,7 @@ function Dashboard({
                           <TableHead className="text-white/40 w-36">
                             Date
                           </TableHead>
+                          <TableHead className="text-white/40 w-8" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1518,6 +1586,21 @@ function Dashboard({
                             </TableCell>
                             <TableCell className="text-white/40 text-xs whitespace-nowrap">
                               {msToDateShort(p.tsMs)}
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                data-ocid={`admin.about.delete_button.${i + 1}`}
+                                onClick={() =>
+                                  onDeletePageInteraction(
+                                    pageInteractions.indexOf(p),
+                                  )
+                                }
+                                className="text-white/20 hover:text-red-400 transition-colors p-1 rounded"
+                                title="Delete"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </TableCell>
                           </TableRow>
                         ))}
@@ -1547,6 +1630,17 @@ function Dashboard({
                       "contact-submissions.csv",
                     )
                   }
+                  onClearAll={() =>
+                    onClearContacts(
+                      (c) =>
+                        c.source === "Contact Page" ||
+                        (!c.source &&
+                          !c.service &&
+                          !c.caseStudy &&
+                          c.source !== "Home - Free SEO Audit" &&
+                          c.source !== "Home - Lead Form"),
+                    )
+                  }
                 />
                 <SearchBar
                   value={search}
@@ -1574,6 +1668,7 @@ function Dashboard({
                   emptyText="No contact form submissions yet"
                   ocidPrefix="admin.contact"
                   onRowClick={(c) => setSelectedContact(c)}
+                  onDelete={(c) => onDeleteContact(c)}
                 />
               </motion.div>
             )}
@@ -1633,6 +1728,16 @@ function Dashboard({
                       <Download className="w-3.5 h-3.5 mr-1.5" />
                       Export CSV
                     </Button>
+                    <Button
+                      data-ocid="admin.chatbot.clear_all.button"
+                      variant="outline"
+                      size="sm"
+                      onClick={onClearChatbotLogs}
+                      className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10 text-xs"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                      Clear All
+                    </Button>
                   </div>
                 </div>
 
@@ -1675,6 +1780,7 @@ function Dashboard({
                           <TableHead className="text-white/40 w-32">
                             Date/Time
                           </TableHead>
+                          <TableHead className="text-white/40 w-8" />
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -1706,6 +1812,17 @@ function Dashboard({
                               </TableCell>
                               <TableCell className="text-white/40 text-xs whitespace-nowrap">
                                 {formatDate(log.timestamp)}
+                              </TableCell>
+                              <TableCell>
+                                <button
+                                  type="button"
+                                  data-ocid={`admin.chatbot.delete_button.${i + 1}`}
+                                  onClick={() => onDeleteChatbotLog(log.id)}
+                                  className="text-white/20 hover:text-red-400 transition-colors p-1 rounded"
+                                  title="Delete"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
                               </TableCell>
                             </TableRow>
                           ))}
@@ -2091,12 +2208,14 @@ function PageDataTable({
   emptyText,
   ocidPrefix,
   onRowClick,
+  onDelete,
 }: {
   data: LocalContact[];
   columns: ColumnDef[];
   emptyText: string;
   ocidPrefix: string;
   onRowClick: (row: LocalContact) => void;
+  onDelete?: (row: LocalContact, index: number) => void;
 }) {
   return (
     <div
@@ -2118,6 +2237,7 @@ function PageDataTable({
                 </TableHead>
               ))}
               <TableHead className="text-white/40 w-8" />
+              {onDelete && <TableHead className="text-white/40 w-8" />}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -2148,6 +2268,22 @@ function PageDataTable({
                 <TableCell>
                   <Eye className="w-3.5 h-3.5 text-white/30" />
                 </TableCell>
+                {onDelete && (
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <button
+                      type="button"
+                      data-ocid={`${ocidPrefix}.delete_button.${i + 1}`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDelete(row, i);
+                      }}
+                      className="text-white/20 hover:text-red-400 transition-colors p-1 rounded"
+                      title="Delete entry"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
@@ -2391,6 +2527,99 @@ export default function AdminPanel() {
     setAuthState("login");
   }
 
+  function handleDeleteContact(contact: LocalContact) {
+    const updated = localContacts.filter(
+      (c) => !(c.email === contact.email && c.tsMs === contact.tsMs),
+    );
+    const raw = updated.map((c) => ({
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      message: c.message,
+      source: c.source,
+      service: c.service,
+      caseStudy: c.caseStudy,
+      domain: c.domain,
+      timestamp: c.tsMs,
+    }));
+    localStorage.setItem("rankpro_contact_submissions", JSON.stringify(raw));
+    setLocalContacts(updated);
+  }
+
+  function handleDeleteBlogView(index: number) {
+    const updated = blogViews.filter((_, i) => i !== index);
+    localStorage.setItem(
+      "rankpro_blog_views",
+      JSON.stringify(
+        updated.map((b) => ({
+          title: b.title,
+          tags: b.tags,
+          timestamp: b.tsMs,
+        })),
+      ),
+    );
+    setBlogViews(updated);
+  }
+
+  function handleDeletePageInteraction(index: number) {
+    const updated = pageInteractions.filter((_, i) => i !== index);
+    localStorage.setItem(
+      "rankpro_page_interactions",
+      JSON.stringify(
+        updated.map((p) => ({
+          action: p.action,
+          page: p.page,
+          timestamp: p.tsMs,
+        })),
+      ),
+    );
+    setPageInteractions(updated);
+  }
+
+  function handleDeleteChatbotLog(logId: bigint) {
+    const updated = chatbotLogs.filter((l) => l.id !== logId);
+    const raw = updated.map((l) => ({
+      id: Number(l.id),
+      question: l.question,
+      answer: l.answer,
+      timestamp: Number(l.timestamp / 1_000_000n),
+    }));
+    localStorage.setItem("rankpro_chatbot_logs", JSON.stringify(raw));
+    setChatbotLogs(updated);
+  }
+
+  function handleClearContacts(filter: (c: LocalContact) => boolean) {
+    const updated = localContacts.filter((c) => !filter(c));
+    const raw = updated.map((c) => ({
+      name: c.name,
+      email: c.email,
+      phone: c.phone,
+      message: c.message,
+      source: c.source,
+      service: c.service,
+      caseStudy: c.caseStudy,
+      domain: c.domain,
+      timestamp: c.tsMs,
+    }));
+    localStorage.setItem("rankpro_contact_submissions", JSON.stringify(raw));
+    setLocalContacts(updated);
+  }
+
+  function handleClearBlogViews() {
+    localStorage.removeItem("rankpro_blog_views");
+    setBlogViews([]);
+  }
+
+  function handleClearPageInteractions() {
+    localStorage.removeItem("rankpro_page_interactions");
+    setPageInteractions([]);
+  }
+
+  function handleClearChatbotLogs() {
+    localStorage.removeItem("rankpro_chatbot_logs");
+    setChatbotLogs([]);
+  }
+
   if (authState === "loading") {
     return (
       <div
@@ -2419,6 +2648,14 @@ export default function AdminPanel() {
       isLoading={isLoadingData}
       onRefresh={() => sessionToken && loadData(sessionToken)}
       onLogout={handleLogout}
+      onDeleteContact={handleDeleteContact}
+      onDeleteBlogView={handleDeleteBlogView}
+      onDeletePageInteraction={handleDeletePageInteraction}
+      onDeleteChatbotLog={handleDeleteChatbotLog}
+      onClearContacts={handleClearContacts}
+      onClearBlogViews={handleClearBlogViews}
+      onClearPageInteractions={handleClearPageInteractions}
+      onClearChatbotLogs={handleClearChatbotLogs}
     />
   );
 }
