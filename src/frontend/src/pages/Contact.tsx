@@ -62,6 +62,7 @@ export default function Contact() {
         email: form.email,
         phone: form.phone,
         message: form.message,
+        source: "Contact Page",
         timestamp: Date.now(),
       });
       localStorage.setItem(

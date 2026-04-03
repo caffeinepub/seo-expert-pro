@@ -257,6 +257,25 @@ export default function About() {
         <Link
           to="/contact"
           className="bg-[#38C98A] hover:bg-[#2db87a] text-white px-8 py-3 rounded-full font-semibold transition-colors"
+          onClick={() => {
+            try {
+              const entry = {
+                action: "CTA Click - Get Your Free Audit",
+                page: "About",
+                timestamp: Date.now(),
+              };
+              const existing = JSON.parse(
+                localStorage.getItem("rankpro_page_interactions") || "[]",
+              );
+              existing.unshift(entry);
+              localStorage.setItem(
+                "rankpro_page_interactions",
+                JSON.stringify(existing),
+              );
+            } catch {
+              /* ignore */
+            }
+          }}
         >
           Get Your Free Audit
         </Link>

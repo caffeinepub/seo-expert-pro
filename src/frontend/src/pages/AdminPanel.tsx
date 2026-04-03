@@ -20,10 +20,12 @@ import {
 import {
   AlertTriangle,
   BarChart3,
-  ChevronRight,
+  BookOpen,
+  Briefcase,
   Clock,
   Download,
   Eye,
+  Home,
   KeyRound,
   LayoutDashboard,
   Lock,
@@ -35,6 +37,7 @@ import {
   Search,
   Shield,
   TrendingUp,
+  User,
   Users,
   X,
 } from "lucide-react";
@@ -61,7 +64,16 @@ import type {
 } from "../backend";
 import { useActor } from "../hooks/useActor";
 
-type Tab = "overview" | "chatbot" | "contacts" | "analytics";
+type Tab =
+  | "overview"
+  | "home"
+  | "services"
+  | "case-studies"
+  | "blog"
+  | "about"
+  | "contact"
+  | "chatbot"
+  | "analytics";
 type AuthState = "loading" | "setup" | "login" | "dashboard";
 
 const SESSION_KEY = "admin_session_token";
@@ -119,6 +131,51 @@ const STOPWORDS = new Set([
   "s",
 ]);
 
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+interface RawSubmission {
+  name?: string;
+  email?: string;
+  phone?: string;
+  message?: string;
+  source?: string;
+  service?: string;
+  caseStudy?: string;
+  domain?: string;
+  timestamp?: number;
+  date?: string;
+  tags?: string[];
+  title?: string;
+  action?: string;
+  page?: string;
+}
+
+interface LocalContact {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  source: string;
+  service?: string;
+  caseStudy?: string;
+  domain?: string;
+  tsMs: number;
+}
+
+interface BlogView {
+  title: string;
+  tags: string[];
+  tsMs: number;
+}
+
+interface PageInteraction {
+  action: string;
+  page: string;
+  tsMs: number;
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function tsToDate(ts: bigint): Date {
   return new Date(Number(ts / 1_000_000n));
 }
@@ -127,8 +184,12 @@ function formatDate(ts: bigint): string {
   return tsToDate(ts).toLocaleString();
 }
 
-function formatDateShort(ts: bigint): string {
-  return tsToDate(ts).toLocaleDateString();
+function msToDateStr(ms: number): string {
+  return new Date(ms).toLocaleString();
+}
+
+function msToDateShort(ms: number): string {
+  return new Date(ms).toLocaleDateString();
 }
 
 function groupByDay(items: { timestamp: bigint }[]) {
@@ -195,18 +256,43 @@ const BG_PARTICLES = Array.from({ length: 20 }, (_, i) => ({
 const NAV_ITEMS: { id: Tab; label: string; icon: React.ReactNode }[] = [
   {
     id: "overview",
-    label: "Dashboard Overview",
+    label: "Overview",
     icon: <LayoutDashboard className="w-4 h-4" />,
+  },
+  {
+    id: "home",
+    label: "Home Page",
+    icon: <Home className="w-4 h-4" />,
+  },
+  {
+    id: "services",
+    label: "Services Page",
+    icon: <Briefcase className="w-4 h-4" />,
+  },
+  {
+    id: "case-studies",
+    label: "Case Studies",
+    icon: <TrendingUp className="w-4 h-4" />,
+  },
+  {
+    id: "blog",
+    label: "Blog Page",
+    icon: <BookOpen className="w-4 h-4" />,
+  },
+  {
+    id: "about",
+    label: "About Page",
+    icon: <User className="w-4 h-4" />,
+  },
+  {
+    id: "contact",
+    label: "Contact Page",
+    icon: <Mail className="w-4 h-4" />,
   },
   {
     id: "chatbot",
     label: "Chatbot Data",
     icon: <MessageSquare className="w-4 h-4" />,
-  },
-  {
-    id: "contacts",
-    label: "Contact Submissions",
-    icon: <Mail className="w-4 h-4" />,
   },
   {
     id: "analytics",
@@ -224,52 +310,42 @@ interface SidebarProps {
 function Sidebar({ activeTab, setActiveTab, onClose }: SidebarProps) {
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        <div className="w-8 h-8 rounded-lg bg-green-500 flex items-center justify-center shrink-0">
-          <Shield className="w-4 h-4 text-white" />
+      <div className="flex items-center gap-3 px-4 py-4 border-b border-white/10">
+        <div className="w-8 h-8 rounded-lg bg-green-500/20 border border-green-500/30 flex items-center justify-center">
+          <Shield className="w-4 h-4 text-green-400" />
         </div>
-        <span className="text-white font-bold text-sm tracking-wide">
-          RankPro Admin
-        </span>
+        <span className="text-white font-bold text-sm">RankPro Admin</span>
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="ml-auto text-white/50 hover:text-white"
+            className="ml-auto text-white/40 hover:text-white"
           >
             <X className="w-4 h-4" />
           </button>
         )}
       </div>
-      <nav className="flex-1 py-4 px-3 space-y-1">
+      <nav className="flex-1 p-3 space-y-0.5 overflow-y-auto">
         {NAV_ITEMS.map((item) => (
           <button
             key={item.id}
             type="button"
-            data-ocid={`admin.${item.id}.tab`}
+            data-ocid={`admin.nav.${item.id}.tab`}
             onClick={() => {
               setActiveTab(item.id);
               onClose?.();
             }}
-            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
               activeTab === item.id
-                ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                : "text-white/60 hover:text-white hover:bg-white/5"
+                ? "bg-green-500/20 text-green-400"
+                : "text-white/50 hover:text-white hover:bg-white/5"
             }`}
           >
             {item.icon}
             {item.label}
-            {activeTab === item.id && (
-              <ChevronRight className="w-3.5 h-3.5 ml-auto" />
-            )}
           </button>
         ))}
       </nav>
-      <div className="px-3 pb-4">
-        <div className="rounded-lg bg-white/5 border border-white/10 px-3 py-2.5 text-xs text-white/40">
-          Owner-only access
-        </div>
-      </div>
     </div>
   );
 }
@@ -287,18 +363,11 @@ function StatCard({
   sub?: string;
 }) {
   return (
-    <div
-      data-ocid="admin.overview.card"
-      className="rounded-xl border border-white/10 bg-white/5 backdrop-blur p-5 flex items-start gap-4"
-    >
-      <div className="w-10 h-10 rounded-lg bg-green-500/20 border border-green-500/30 flex items-center justify-center text-green-400 shrink-0">
-        {icon}
-      </div>
-      <div>
-        <p className="text-white/50 text-xs mb-1">{label}</p>
-        <p className="text-white text-2xl font-bold">{value}</p>
-        {sub && <p className="text-white/40 text-xs mt-1">{sub}</p>}
-      </div>
+    <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+      <div className="flex items-center gap-2 text-green-400 mb-3">{icon}</div>
+      <div className="text-3xl font-bold text-white mb-1">{value}</div>
+      <div className="text-white/40 text-sm">{label}</div>
+      {sub && <p className="text-white/40 text-xs mt-1">{sub}</p>}
     </div>
   );
 }
@@ -448,7 +517,6 @@ function LoginScreen({
         </Button>
       </form>
 
-      {/* Default credentials info box */}
       <div className="mt-5 rounded-lg bg-blue-500/10 border border-blue-400/20 px-4 py-3">
         <p className="text-blue-300 text-xs font-semibold uppercase tracking-wider mb-2">
           Default Login Credentials
@@ -529,10 +597,10 @@ function SetupScreen({
           <KeyRound className="w-8 h-8 text-green-400" />
         </div>
         <h1 className="text-2xl font-bold text-white mb-2">
-          Set Up Admin Access
+          Create Admin Account
         </h1>
         <p className="text-white/50 text-sm">
-          Create your admin credentials to protect this panel.
+          Set up your admin credentials to access the dashboard.
         </p>
       </div>
 
@@ -553,7 +621,7 @@ function SetupScreen({
       >
         <div className="space-y-1.5">
           <Label htmlFor="setup-email" className="text-white/70 text-sm">
-            Admin Email
+            Email
           </Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
@@ -561,7 +629,7 @@ function SetupScreen({
               id="setup-email"
               data-ocid="admin.setup.input"
               type="email"
-              placeholder="your@email.com"
+              placeholder="admin@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-green-500/50"
@@ -570,7 +638,6 @@ function SetupScreen({
             />
           </div>
         </div>
-
         <div className="space-y-1.5">
           <Label htmlFor="setup-password" className="text-white/70 text-sm">
             Password
@@ -581,7 +648,7 @@ function SetupScreen({
               id="setup-password"
               data-ocid="admin.setup.input"
               type="password"
-              placeholder="At least 8 characters"
+              placeholder="Min. 8 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-green-500/50"
@@ -590,13 +657,12 @@ function SetupScreen({
             />
           </div>
         </div>
-
         <div className="space-y-1.5">
           <Label htmlFor="setup-confirm" className="text-white/70 text-sm">
             Confirm Password
           </Label>
           <div className="relative">
-            <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+            <KeyRound className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
             <Input
               id="setup-confirm"
               data-ocid="admin.setup.input"
@@ -610,7 +676,6 @@ function SetupScreen({
             />
           </div>
         </div>
-
         <Button
           type="submit"
           data-ocid="admin.setup.submit_button"
@@ -629,83 +694,214 @@ function SetupScreen({
   );
 }
 
+// ─── Page Tab Helper ───────────────────────────────────────────────────────────
+function PageTabHeader({
+  title,
+  subtitle,
+  count,
+  onExport,
+  exportLabel = "Export CSV",
+}: {
+  title: string;
+  subtitle: string;
+  count: number;
+  onExport: () => void;
+  exportLabel?: string;
+}) {
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+      <div>
+        <h2 className="text-white text-xl font-bold">{title}</h2>
+        <p className="text-white/40 text-sm mt-0.5">{subtitle}</p>
+      </div>
+      <div className="sm:ml-auto flex items-center gap-3">
+        <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
+          {count} entries
+        </Badge>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onExport}
+          className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 text-xs"
+        >
+          <Download className="w-3.5 h-3.5 mr-1.5" />
+          {exportLabel}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function SearchBar({
+  value,
+  onChange,
+  placeholder,
+  ocid,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+  ocid: string;
+}) {
+  return (
+    <div className="relative mb-4">
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+      <Input
+        data-ocid={ocid}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-green-500/50"
+      />
+    </div>
+  );
+}
+
+function EmptyState({ icon, text }: { icon: React.ReactNode; text: string }) {
+  return (
+    <div className="flex flex-col items-center py-16 text-white/30">
+      <div className="w-10 h-10 mb-3 opacity-30">{icon}</div>
+      <p>{text}</p>
+    </div>
+  );
+}
+
 // ─── Main Dashboard ───────────────────────────────────────────────────────────
 function Dashboard({
   chatbotLogs,
-  contactSubmissions,
+  localContacts,
+  blogViews,
+  pageInteractions,
   isLoading,
   onRefresh,
   onLogout,
 }: {
   chatbotLogs: ChatbotLog[];
-  contactSubmissions: ContactFormEntry[];
+  localContacts: LocalContact[];
+  blogViews: BlogView[];
+  pageInteractions: PageInteraction[];
   isLoading: boolean;
   onRefresh: () => void;
   onLogout: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [chatSearch, setChatSearch] = useState("");
-  const [contactSearch, setContactSearch] = useState("");
-  const [selectedContact, setSelectedContact] =
-    useState<ContactFormEntry | null>(null);
-
-  const filteredChat = chatbotLogs.filter(
-    (l) =>
-      l.question.toLowerCase().includes(chatSearch.toLowerCase()) ||
-      l.answer.toLowerCase().includes(chatSearch.toLowerCase()),
+  const [search, setSearch] = useState("");
+  const [selectedContact, setSelectedContact] = useState<LocalContact | null>(
+    null,
   );
 
-  const filteredContacts = contactSubmissions.filter(
+  // ── Data filters ──
+  const homeSubmissions = localContacts.filter(
     (c) =>
-      c.name.toLowerCase().includes(contactSearch.toLowerCase()) ||
-      c.email.toLowerCase().includes(contactSearch.toLowerCase()) ||
-      c.message.toLowerCase().includes(contactSearch.toLowerCase()),
+      c.source === "Home - Free SEO Audit" || c.source === "Home - Lead Form",
   );
 
-  const recentContacts = [...contactSubmissions]
-    .sort((a, b) => Number(b.timestamp - a.timestamp))
-    .slice(0, 5);
-  const recentChat = [...chatbotLogs]
-    .sort((a, b) => Number(b.timestamp - a.timestamp))
-    .slice(0, 5);
+  const serviceSubmissions = localContacts.filter(
+    (c) =>
+      c.service != null &&
+      c.source !== "Home - Free SEO Audit" &&
+      c.source !== "Home - Lead Form" &&
+      !c.caseStudy,
+  );
 
-  const contactsOverTime = groupByDay(contactSubmissions);
+  const caseStudySubmissions = localContacts.filter((c) => c.caseStudy != null);
+
+  const contactPageSubmissions = localContacts.filter(
+    (c) =>
+      c.source === "Contact Page" ||
+      (!c.source &&
+        !c.service &&
+        !c.caseStudy &&
+        c.source !== "Home - Free SEO Audit" &&
+        c.source !== "Home - Lead Form"),
+  );
+
+  // ── Search helpers ──
+  function filterContacts(list: LocalContact[]) {
+    if (!search) return list;
+    const q = search.toLowerCase();
+    return list.filter(
+      (c) =>
+        (c.name || "").toLowerCase().includes(q) ||
+        (c.email || "").toLowerCase().includes(q) ||
+        (c.message || "").toLowerCase().includes(q),
+    );
+  }
+
+  function filterBlogViews(list: BlogView[]) {
+    if (!search) return list;
+    const q = search.toLowerCase();
+    return list.filter(
+      (b) =>
+        b.title.toLowerCase().includes(q) ||
+        b.tags.some((t) => t.toLowerCase().includes(q)),
+    );
+  }
+
+  const contactsOverTime = groupByDay(
+    localContacts.map((c) => ({ timestamp: BigInt(c.tsMs) * 1_000_000n })),
+  );
   const chatOverTime = groupByDay(chatbotLogs);
   const topics = extractTopics(chatbotLogs);
 
-  const mostRecentTs = contactSubmissions.length
-    ? contactSubmissions.reduce((a, b) => (a.timestamp > b.timestamp ? a : b))
-        .timestamp
+  const mostRecentTs = localContacts.length
+    ? Math.max(...localContacts.map((c) => c.tsMs))
     : null;
 
-  function handleExportChat() {
+  // ── Recent activity feed (last 20 across all sources) ──
+  const allActivity = [
+    ...localContacts.map((c) => ({
+      label: c.source || c.service || "Contact Form",
+      detail: c.name ? `${c.name} (${c.email})` : c.email || "—",
+      ts: c.tsMs,
+      type: "contact" as const,
+    })),
+    ...blogViews.map((b) => ({
+      label: "Blog View",
+      detail: b.title,
+      ts: b.tsMs,
+      type: "blog" as const,
+    })),
+    ...pageInteractions.map((p) => ({
+      label: `${p.page} Interaction`,
+      detail: p.action,
+      ts: p.tsMs,
+      type: "interaction" as const,
+    })),
+    ...chatbotLogs.map((l) => ({
+      label: "Chatbot",
+      detail: l.question,
+      ts: Number(l.timestamp / 1_000_000n),
+      type: "chat" as const,
+    })),
+  ]
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, 20);
+
+  // ── Export helpers ──
+  function exportContacts(list: LocalContact[], filename: string) {
     exportCSV(
-      ["#", "Question", "Bot Answer", "Date/Time"],
-      filteredChat.map((l, i) => [
+      ["#", "Source", "Name", "Email", "Phone", "Message", "Date"],
+      list.map((c, i) => [
         String(i + 1),
-        l.question,
-        l.answer,
-        formatDate(l.timestamp),
+        c.source || c.service || "",
+        c.name || "",
+        c.email || "",
+        c.phone || "",
+        c.message || "",
+        msToDateStr(c.tsMs),
       ]),
-      "chatbot-logs.csv",
+      filename,
     );
   }
 
-  function handleExportContacts() {
-    exportCSV(
-      ["#", "Name", "Email", "Phone", "Message", "Date/Time"],
-      filteredContacts.map((c, i) => [
-        String(i + 1),
-        c.name,
-        c.email,
-        c.phone,
-        c.message,
-        formatDate(c.timestamp),
-      ]),
-      "contact-submissions.csv",
-    );
-  }
+  const activityTypeColors: Record<string, string> = {
+    contact: "#22c55e",
+    blog: "#38bdf8",
+    interaction: "#a78bfa",
+    chat: "#fb923c",
+  };
 
   return (
     <div
@@ -808,11 +1004,74 @@ function Dashboard({
                 <h2 className="text-white text-xl font-bold mb-6">
                   Dashboard Overview
                 </h2>
+
+                {/* Page summary cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3 mb-8">
+                  {[
+                    {
+                      label: "Home",
+                      count: homeSubmissions.length,
+                      icon: <Home className="w-4 h-4" />,
+                      color: "#22c55e",
+                    },
+                    {
+                      label: "Services",
+                      count: serviceSubmissions.length,
+                      icon: <Briefcase className="w-4 h-4" />,
+                      color: "#38bdf8",
+                    },
+                    {
+                      label: "Case Studies",
+                      count: caseStudySubmissions.length,
+                      icon: <TrendingUp className="w-4 h-4" />,
+                      color: "#a78bfa",
+                    },
+                    {
+                      label: "Blog Views",
+                      count: blogViews.length,
+                      icon: <BookOpen className="w-4 h-4" />,
+                      color: "#fb923c",
+                    },
+                    {
+                      label: "About CTAs",
+                      count: pageInteractions.length,
+                      icon: <User className="w-4 h-4" />,
+                      color: "#f472b6",
+                    },
+                    {
+                      label: "Contact",
+                      count: contactPageSubmissions.length,
+                      icon: <Mail className="w-4 h-4" />,
+                      color: "#34d399",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.label}
+                      className="rounded-xl border border-white/10 bg-white/5 p-4 text-center"
+                    >
+                      <div
+                        className="w-8 h-8 rounded-lg mx-auto mb-2 flex items-center justify-center"
+                        style={{
+                          background: `${item.color}20`,
+                          color: item.color,
+                        }}
+                      >
+                        {item.icon}
+                      </div>
+                      <div className="text-2xl font-bold text-white mb-0.5">
+                        {item.count}
+                      </div>
+                      <div className="text-white/40 text-xs">{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Additional stats */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                   <StatCard
                     icon={<Mail className="w-5 h-5" />}
                     label="Total Contact Submissions"
-                    value={contactSubmissions.length}
+                    value={localContacts.length}
                   />
                   <StatCard
                     icon={<MessageSquare className="w-5 h-5" />}
@@ -822,90 +1081,500 @@ function Dashboard({
                   <StatCard
                     icon={<Clock className="w-5 h-5" />}
                     label="Most Recent Submission"
-                    value={mostRecentTs ? formatDateShort(mostRecentTs) : "—"}
-                    sub={mostRecentTs ? formatDate(mostRecentTs) : undefined}
+                    value={mostRecentTs ? msToDateShort(mostRecentTs) : "—"}
+                    sub={mostRecentTs ? msToDateStr(mostRecentTs) : undefined}
                   />
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Recent Contacts */}
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Mail className="w-4 h-4 text-green-400" />
-                      <h3 className="text-white font-semibold text-sm">
-                        Recent Contacts
-                      </h3>
-                    </div>
-                    {recentContacts.length === 0 ? (
-                      <p
-                        data-ocid="admin.contacts.empty_state"
-                        className="text-white/30 text-sm text-center py-6"
-                      >
-                        No submissions yet
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {recentContacts.map((c, idx) => (
-                          <div
-                            key={c.email + String(c.timestamp)}
-                            data-ocid={`admin.contacts.item.${idx + 1}`}
-                            className="flex items-center gap-3 p-2.5 rounded-lg bg-white/5"
-                          >
-                            <div className="w-7 h-7 rounded-full bg-green-500/20 flex items-center justify-center text-green-400 text-xs font-bold shrink-0">
-                              {c.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-white text-sm font-medium truncate">
-                                {c.name}
-                              </p>
-                              <p className="text-white/40 text-xs truncate">
-                                {c.email}
-                              </p>
-                            </div>
-                            <p className="text-white/30 text-xs shrink-0">
-                              {formatDateShort(c.timestamp)}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                {/* Recent Activity Feed */}
+                <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Clock className="w-4 h-4 text-green-400" />
+                    <h3 className="text-white font-semibold text-sm">
+                      Recent Activity
+                    </h3>
+                    <Badge className="ml-auto bg-white/5 text-white/40 border-white/10 text-xs">
+                      Last 20 events
+                    </Badge>
                   </div>
-
-                  {/* Recent Chatbot */}
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <MessageSquare className="w-4 h-4 text-green-400" />
-                      <h3 className="text-white font-semibold text-sm">
-                        Recent Chatbot Messages
-                      </h3>
+                  {allActivity.length === 0 ? (
+                    <div
+                      data-ocid="admin.overview.empty_state"
+                      className="text-white/30 text-sm text-center py-8"
+                    >
+                      No activity yet. Submit a form or chat with the bot.
                     </div>
-                    {recentChat.length === 0 ? (
-                      <p
-                        data-ocid="admin.chatbot.empty_state"
-                        className="text-white/30 text-sm text-center py-6"
-                      >
-                        No messages yet
-                      </p>
-                    ) : (
-                      <div className="space-y-3">
-                        {recentChat.map((l, i) => (
+                  ) : (
+                    <div className="space-y-2">
+                      {allActivity.map((item, i) => (
+                        <div
+                          key={`${item.ts}-${i}`}
+                          data-ocid={`admin.overview.item.${i + 1}`}
+                          className="flex items-start gap-3 py-2 border-b border-white/5 last:border-0"
+                        >
                           <div
-                            key={Number(l.id)}
-                            data-ocid={`admin.chatbot.item.${i + 1}`}
-                            className="p-2.5 rounded-lg bg-white/5"
-                          >
-                            <p className="text-white text-xs font-medium truncate mb-1">
-                              Q: {l.question}
-                            </p>
-                            <p className="text-white/40 text-xs truncate">
-                              A: {l.answer}
-                            </p>
+                            className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                            style={{
+                              background: activityTypeColors[item.type],
+                            }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <span
+                              className="text-xs font-semibold px-1.5 py-0.5 rounded mr-2"
+                              style={{
+                                background: `${activityTypeColors[item.type]}20`,
+                                color: activityTypeColors[item.type],
+                              }}
+                            >
+                              {item.label}
+                            </span>
+                            <span className="text-white/60 text-xs truncate">
+                              {item.detail}
+                            </span>
                           </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                          <span className="text-white/30 text-xs whitespace-nowrap shrink-0">
+                            {msToDateShort(item.ts)}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
+              </motion.div>
+            )}
+
+            {/* ── Home Page ── */}
+            {activeTab === "home" && (
+              <motion.div
+                key="home"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                data-ocid="admin.home.section"
+              >
+                <PageTabHeader
+                  title="Home Page Submissions"
+                  subtitle="Free SEO Audit requests and Lead Form submissions from the homepage"
+                  count={filterContacts(homeSubmissions).length}
+                  onExport={() =>
+                    exportContacts(homeSubmissions, "home-submissions.csv")
+                  }
+                />
+                <SearchBar
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search by name, email or message..."
+                  ocid="admin.home.search_input"
+                />
+
+                {/* Free Audit sub-section */}
+                <div className="mb-6">
+                  <h3 className="text-green-400 text-sm font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Search className="w-3.5 h-3.5" /> Free SEO Audit Requests
+                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30 ml-1">
+                      {
+                        filterContacts(
+                          homeSubmissions.filter(
+                            (c) => c.source === "Home - Free SEO Audit",
+                          ),
+                        ).length
+                      }
+                    </Badge>
+                  </h3>
+                  <PageDataTable
+                    data={filterContacts(
+                      homeSubmissions.filter(
+                        (c) => c.source === "Home - Free SEO Audit",
+                      ),
+                    )}
+                    columns={[
+                      { key: "domain", label: "Domain" },
+                      { key: "email", label: "Email" },
+                      {
+                        key: "tsMs",
+                        label: "Date",
+                        render: (c) => msToDateShort(c.tsMs),
+                      },
+                    ]}
+                    emptyText="No audit requests yet"
+                    ocidPrefix="admin.home.audit"
+                    onRowClick={(c) => setSelectedContact(c)}
+                  />
+                </div>
+
+                {/* Lead Form sub-section */}
+                <div>
+                  <h3 className="text-blue-400 text-sm font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <Users className="w-3.5 h-3.5" /> Lead Form Submissions
+                    <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30 ml-1">
+                      {
+                        filterContacts(
+                          homeSubmissions.filter(
+                            (c) => c.source === "Home - Lead Form",
+                          ),
+                        ).length
+                      }
+                    </Badge>
+                  </h3>
+                  <PageDataTable
+                    data={filterContacts(
+                      homeSubmissions.filter(
+                        (c) => c.source === "Home - Lead Form",
+                      ),
+                    )}
+                    columns={[
+                      { key: "name", label: "Name" },
+                      { key: "email", label: "Email" },
+                      {
+                        key: "domain",
+                        label: "Website",
+                        render: (c) =>
+                          c.domain ||
+                          (c as LocalContact & { website?: string }).website ||
+                          "—",
+                      },
+                      { key: "message", label: "Message", truncate: true },
+                      {
+                        key: "tsMs",
+                        label: "Date",
+                        render: (c) => msToDateShort(c.tsMs),
+                      },
+                    ]}
+                    emptyText="No lead form submissions yet"
+                    ocidPrefix="admin.home.lead"
+                    onRowClick={(c) => setSelectedContact(c)}
+                  />
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Services Page ── */}
+            {activeTab === "services" && (
+              <motion.div
+                key="services"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                data-ocid="admin.services.section"
+              >
+                <PageTabHeader
+                  title="Services Page Quote Requests"
+                  subtitle="Quote form submissions from individual service detail pages"
+                  count={filterContacts(serviceSubmissions).length}
+                  onExport={() =>
+                    exportContacts(serviceSubmissions, "service-quotes.csv")
+                  }
+                />
+                <SearchBar
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search by name, email, service..."
+                  ocid="admin.services.search_input"
+                />
+                <PageDataTable
+                  data={filterContacts(serviceSubmissions)}
+                  columns={[
+                    {
+                      key: "service",
+                      label: "Service",
+                      render: (c) => c.service || "—",
+                    },
+                    { key: "name", label: "Name" },
+                    { key: "email", label: "Email" },
+                    {
+                      key: "phone",
+                      label: "Phone",
+                      render: (c) => c.phone || "—",
+                    },
+                    { key: "message", label: "Message", truncate: true },
+                    {
+                      key: "tsMs",
+                      label: "Date",
+                      render: (c) => msToDateShort(c.tsMs),
+                    },
+                  ]}
+                  emptyText="No service quote requests yet"
+                  ocidPrefix="admin.services"
+                  onRowClick={(c) => setSelectedContact(c)}
+                />
+              </motion.div>
+            )}
+
+            {/* ── Case Studies Page ── */}
+            {activeTab === "case-studies" && (
+              <motion.div
+                key="case-studies"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                data-ocid="admin.casestudies.section"
+              >
+                <PageTabHeader
+                  title="Case Studies Quote Requests"
+                  subtitle="Quote form submissions from case study detail pages"
+                  count={filterContacts(caseStudySubmissions).length}
+                  onExport={() =>
+                    exportContacts(
+                      caseStudySubmissions,
+                      "case-study-quotes.csv",
+                    )
+                  }
+                />
+                <SearchBar
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search by name, email, case study..."
+                  ocid="admin.casestudies.search_input"
+                />
+                <PageDataTable
+                  data={filterContacts(caseStudySubmissions)}
+                  columns={[
+                    {
+                      key: "caseStudy",
+                      label: "Case Study",
+                      render: (c) => c.caseStudy || c.service || "—",
+                    },
+                    { key: "name", label: "Name" },
+                    { key: "email", label: "Email" },
+                    {
+                      key: "phone",
+                      label: "Phone",
+                      render: (c) => c.phone || "—",
+                    },
+                    { key: "message", label: "Message", truncate: true },
+                    {
+                      key: "tsMs",
+                      label: "Date",
+                      render: (c) => msToDateShort(c.tsMs),
+                    },
+                  ]}
+                  emptyText="No case study quote requests yet"
+                  ocidPrefix="admin.casestudies"
+                  onRowClick={(c) => setSelectedContact(c)}
+                />
+              </motion.div>
+            )}
+
+            {/* ── Blog Page ── */}
+            {activeTab === "blog" && (
+              <motion.div
+                key="blog"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                data-ocid="admin.blog.section"
+              >
+                <PageTabHeader
+                  title="Blog Page Views"
+                  subtitle="Articles viewed by users on the blog page"
+                  count={filterBlogViews(blogViews).length}
+                  onExport={() =>
+                    exportCSV(
+                      ["#", "Article Title", "Tags", "Date Viewed"],
+                      blogViews.map((b, i) => [
+                        String(i + 1),
+                        b.title,
+                        b.tags.join(", "),
+                        msToDateStr(b.tsMs),
+                      ]),
+                      "blog-views.csv",
+                    )
+                  }
+                />
+                <SearchBar
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search by article title or tags..."
+                  ocid="admin.blog.search_input"
+                />
+                <div
+                  data-ocid="admin.blog.table"
+                  className="rounded-xl border border-white/10 bg-white/5 overflow-hidden"
+                >
+                  {filterBlogViews(blogViews).length === 0 ? (
+                    <div data-ocid="admin.blog.empty_state">
+                      <EmptyState
+                        icon={<BookOpen className="w-10 h-10" />}
+                        text="No blog article views tracked yet"
+                      />
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-white/10 hover:bg-transparent">
+                          <TableHead className="text-white/40 w-10">
+                            #
+                          </TableHead>
+                          <TableHead className="text-white/40">
+                            Article Title
+                          </TableHead>
+                          <TableHead className="text-white/40">Tags</TableHead>
+                          <TableHead className="text-white/40 w-32">
+                            Date Viewed
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filterBlogViews(blogViews).map((b, i) => (
+                          <TableRow
+                            key={`${b.tsMs}-${i}`}
+                            data-ocid={`admin.blog.row.${i + 1}`}
+                            className="border-white/10 hover:bg-white/5"
+                          >
+                            <TableCell className="text-white/30 text-xs">
+                              {i + 1}
+                            </TableCell>
+                            <TableCell className="text-white text-sm max-w-xs">
+                              <p className="line-clamp-2">{b.title}</p>
+                            </TableCell>
+                            <TableCell className="text-white/60 text-sm">
+                              <div className="flex flex-wrap gap-1">
+                                {b.tags.slice(0, 2).map((t) => (
+                                  <span
+                                    key={t}
+                                    className="bg-green-500/15 text-green-400 text-xs px-2 py-0.5 rounded-full"
+                                  >
+                                    {t}
+                                  </span>
+                                ))}
+                              </div>
+                            </TableCell>
+                            <TableCell className="text-white/40 text-xs whitespace-nowrap">
+                              {msToDateShort(b.tsMs)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── About Page ── */}
+            {activeTab === "about" && (
+              <motion.div
+                key="about"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                data-ocid="admin.about.section"
+              >
+                <PageTabHeader
+                  title="About Page Interactions"
+                  subtitle="CTA button clicks and user interactions from the About page"
+                  count={pageInteractions.length}
+                  onExport={() =>
+                    exportCSV(
+                      ["#", "Action", "Page", "Date"],
+                      pageInteractions.map((p, i) => [
+                        String(i + 1),
+                        p.action,
+                        p.page,
+                        msToDateStr(p.tsMs),
+                      ]),
+                      "about-interactions.csv",
+                    )
+                  }
+                />
+                <div
+                  data-ocid="admin.about.table"
+                  className="rounded-xl border border-white/10 bg-white/5 overflow-hidden"
+                >
+                  {pageInteractions.length === 0 ? (
+                    <div data-ocid="admin.about.empty_state">
+                      <EmptyState
+                        icon={<User className="w-10 h-10" />}
+                        text="No About page interactions tracked yet"
+                      />
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-white/10 hover:bg-transparent">
+                          <TableHead className="text-white/40 w-10">
+                            #
+                          </TableHead>
+                          <TableHead className="text-white/40">
+                            Action
+                          </TableHead>
+                          <TableHead className="text-white/40 w-36">
+                            Date
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {pageInteractions.map((p, i) => (
+                          <TableRow
+                            key={`${p.tsMs}-${i}`}
+                            data-ocid={`admin.about.row.${i + 1}`}
+                            className="border-white/10 hover:bg-white/5"
+                          >
+                            <TableCell className="text-white/30 text-xs">
+                              {i + 1}
+                            </TableCell>
+                            <TableCell className="text-white text-sm">
+                              {p.action}
+                            </TableCell>
+                            <TableCell className="text-white/40 text-xs whitespace-nowrap">
+                              {msToDateShort(p.tsMs)}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </div>
+              </motion.div>
+            )}
+
+            {/* ── Contact Page ── */}
+            {activeTab === "contact" && (
+              <motion.div
+                key="contact"
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                data-ocid="admin.contact.section"
+              >
+                <PageTabHeader
+                  title="Contact Page Submissions"
+                  subtitle="Form submissions from the main Contact page"
+                  count={filterContacts(contactPageSubmissions).length}
+                  onExport={() =>
+                    exportContacts(
+                      contactPageSubmissions,
+                      "contact-submissions.csv",
+                    )
+                  }
+                />
+                <SearchBar
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search by name, email or message..."
+                  ocid="admin.contact.search_input"
+                />
+                <PageDataTable
+                  data={filterContacts(contactPageSubmissions)}
+                  columns={[
+                    { key: "name", label: "Name" },
+                    { key: "email", label: "Email" },
+                    {
+                      key: "phone",
+                      label: "Phone",
+                      render: (c) => c.phone || "—",
+                    },
+                    { key: "message", label: "Message", truncate: true },
+                    {
+                      key: "tsMs",
+                      label: "Date",
+                      render: (c) => msToDateShort(c.tsMs),
+                    },
+                  ]}
+                  emptyText="No contact form submissions yet"
+                  ocidPrefix="admin.contact"
+                  onRowClick={(c) => setSelectedContact(c)}
+                />
               </motion.div>
             )}
 
@@ -929,13 +1598,36 @@ function Dashboard({
                   </div>
                   <div className="sm:ml-auto flex items-center gap-3">
                     <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                      {filteredChat.length} messages
+                      {
+                        chatbotLogs.filter(
+                          (l) =>
+                            !search ||
+                            l.question
+                              .toLowerCase()
+                              .includes(search.toLowerCase()) ||
+                            l.answer
+                              .toLowerCase()
+                              .includes(search.toLowerCase()),
+                        ).length
+                      }{" "}
+                      messages
                     </Badge>
                     <Button
                       data-ocid="admin.chatbot.export.button"
                       variant="outline"
                       size="sm"
-                      onClick={handleExportChat}
+                      onClick={() =>
+                        exportCSV(
+                          ["#", "Question", "Bot Answer", "Date/Time"],
+                          chatbotLogs.map((l, i) => [
+                            String(i + 1),
+                            l.question,
+                            l.answer,
+                            formatDate(l.timestamp),
+                          ]),
+                          "chatbot-logs.csv",
+                        )
+                      }
                       className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 text-xs"
                     >
                       <Download className="w-3.5 h-3.5 mr-1.5" />
@@ -944,28 +1636,28 @@ function Dashboard({
                   </div>
                 </div>
 
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <Input
-                    data-ocid="admin.chatbot.search_input"
-                    placeholder="Search questions or answers..."
-                    value={chatSearch}
-                    onChange={(e) => setChatSearch(e.target.value)}
-                    className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-green-500/50"
-                  />
-                </div>
+                <SearchBar
+                  value={search}
+                  onChange={setSearch}
+                  placeholder="Search questions or answers..."
+                  ocid="admin.chatbot.search_input"
+                />
 
                 <div
                   data-ocid="admin.chatbot.table"
                   className="rounded-xl border border-white/10 bg-white/5 overflow-hidden"
                 >
-                  {filteredChat.length === 0 ? (
-                    <div
-                      data-ocid="admin.chatbot.empty_state"
-                      className="flex flex-col items-center py-16 text-white/30"
-                    >
-                      <MessageSquare className="w-10 h-10 mb-3 opacity-30" />
-                      <p>No chatbot messages found</p>
+                  {chatbotLogs.filter(
+                    (l) =>
+                      !search ||
+                      l.question.toLowerCase().includes(search.toLowerCase()) ||
+                      l.answer.toLowerCase().includes(search.toLowerCase()),
+                  ).length === 0 ? (
+                    <div data-ocid="admin.chatbot.empty_state">
+                      <EmptyState
+                        icon={<MessageSquare className="w-10 h-10" />}
+                        text="No chatbot messages found"
+                      />
                     </div>
                   ) : (
                     <Table>
@@ -986,212 +1678,41 @@ function Dashboard({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {filteredChat.map((log, i) => (
-                          <TableRow
-                            key={Number(log.id)}
-                            data-ocid={`admin.chatbot.row.${i + 1}`}
-                            className="border-white/10 hover:bg-white/5"
-                          >
-                            <TableCell className="text-white/30 text-xs">
-                              {i + 1}
-                            </TableCell>
-                            <TableCell className="text-white text-sm max-w-xs">
-                              <p className="truncate">{log.question}</p>
-                            </TableCell>
-                            <TableCell className="text-white/60 text-sm max-w-xs">
-                              <p className="truncate">{log.answer}</p>
-                            </TableCell>
-                            <TableCell className="text-white/40 text-xs whitespace-nowrap">
-                              {formatDate(log.timestamp)}
-                            </TableCell>
-                          </TableRow>
-                        ))}
+                        {chatbotLogs
+                          .filter(
+                            (l) =>
+                              !search ||
+                              l.question
+                                .toLowerCase()
+                                .includes(search.toLowerCase()) ||
+                              l.answer
+                                .toLowerCase()
+                                .includes(search.toLowerCase()),
+                          )
+                          .map((log, i) => (
+                            <TableRow
+                              key={Number(log.id)}
+                              data-ocid={`admin.chatbot.row.${i + 1}`}
+                              className="border-white/10 hover:bg-white/5"
+                            >
+                              <TableCell className="text-white/30 text-xs">
+                                {i + 1}
+                              </TableCell>
+                              <TableCell className="text-white text-sm max-w-xs">
+                                <p className="truncate">{log.question}</p>
+                              </TableCell>
+                              <TableCell className="text-white/60 text-sm max-w-xs">
+                                <p className="truncate">{log.answer}</p>
+                              </TableCell>
+                              <TableCell className="text-white/40 text-xs whitespace-nowrap">
+                                {formatDate(log.timestamp)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
                       </TableBody>
                     </Table>
                   )}
                 </div>
-              </motion.div>
-            )}
-
-            {/* ── Contact Submissions ── */}
-            {activeTab === "contacts" && (
-              <motion.div
-                key="contacts"
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-                data-ocid="admin.contacts.section"
-              >
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-                  <div>
-                    <h2 className="text-white text-xl font-bold">
-                      Contact Submissions
-                    </h2>
-                    <p className="text-white/40 text-sm mt-0.5">
-                      All form submissions from the contact page
-                    </p>
-                  </div>
-                  <div className="sm:ml-auto flex items-center gap-3">
-                    <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
-                      {filteredContacts.length} entries
-                    </Badge>
-                    <Button
-                      data-ocid="admin.contacts.export.button"
-                      variant="outline"
-                      size="sm"
-                      onClick={handleExportContacts}
-                      className="border-white/20 text-white/70 hover:text-white hover:bg-white/10 text-xs"
-                    >
-                      <Download className="w-3.5 h-3.5 mr-1.5" />
-                      Export CSV
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="relative mb-4">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
-                  <Input
-                    data-ocid="admin.contacts.search_input"
-                    placeholder="Search by name, email or message..."
-                    value={contactSearch}
-                    onChange={(e) => setContactSearch(e.target.value)}
-                    className="pl-9 bg-white/5 border-white/10 text-white placeholder:text-white/30 focus:border-green-500/50"
-                  />
-                </div>
-
-                <div
-                  data-ocid="admin.contacts.table"
-                  className="rounded-xl border border-white/10 bg-white/5 overflow-hidden"
-                >
-                  {filteredContacts.length === 0 ? (
-                    <div
-                      data-ocid="admin.contacts.empty_state"
-                      className="flex flex-col items-center py-16 text-white/30"
-                    >
-                      <Mail className="w-10 h-10 mb-3 opacity-30" />
-                      <p>No contact submissions found</p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow className="border-white/10 hover:bg-transparent">
-                          <TableHead className="text-white/40 w-10">
-                            #
-                          </TableHead>
-                          <TableHead className="text-white/40">Name</TableHead>
-                          <TableHead className="text-white/40">Email</TableHead>
-                          <TableHead className="text-white/40 hidden md:table-cell">
-                            Phone
-                          </TableHead>
-                          <TableHead className="text-white/40">
-                            Message
-                          </TableHead>
-                          <TableHead className="text-white/40 w-32">
-                            Date
-                          </TableHead>
-                          <TableHead className="text-white/40 w-10" />
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredContacts.map((c, i) => (
-                          <TableRow
-                            key={c.email + String(c.timestamp)}
-                            data-ocid={`admin.contacts.row.${i + 1}`}
-                            className="border-white/10 hover:bg-white/5 cursor-pointer"
-                            onClick={() => setSelectedContact(c)}
-                          >
-                            <TableCell className="text-white/30 text-xs">
-                              {i + 1}
-                            </TableCell>
-                            <TableCell className="text-white font-medium text-sm">
-                              {c.name}
-                            </TableCell>
-                            <TableCell className="text-white/60 text-sm">
-                              {c.email}
-                            </TableCell>
-                            <TableCell className="text-white/60 text-sm hidden md:table-cell">
-                              {c.phone || "—"}
-                            </TableCell>
-                            <TableCell className="text-white/60 text-sm max-w-xs">
-                              <p className="truncate">{c.message}</p>
-                            </TableCell>
-                            <TableCell className="text-white/40 text-xs whitespace-nowrap">
-                              {formatDateShort(c.timestamp)}
-                            </TableCell>
-                            <TableCell>
-                              <Eye className="w-3.5 h-3.5 text-white/30" />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
-
-                {/* Contact Detail Modal */}
-                <Dialog
-                  open={!!selectedContact}
-                  onOpenChange={(o) => !o && setSelectedContact(null)}
-                >
-                  <DialogContent
-                    data-ocid="admin.contact.dialog"
-                    className="border-white/10 text-white max-w-lg"
-                    style={{ background: "#0d1b2a" }}
-                  >
-                    <DialogHeader>
-                      <DialogTitle className="text-white flex items-center gap-2">
-                        <Users className="w-4 h-4 text-green-400" />
-                        Contact Details
-                      </DialogTitle>
-                    </DialogHeader>
-                    {selectedContact && (
-                      <div className="space-y-4 mt-2">
-                        <div className="grid grid-cols-2 gap-3">
-                          <div className="rounded-lg bg-white/5 p-3">
-                            <p className="text-white/40 text-xs mb-1">Name</p>
-                            <p className="text-white text-sm font-medium">
-                              {selectedContact.name}
-                            </p>
-                          </div>
-                          <div className="rounded-lg bg-white/5 p-3">
-                            <p className="text-white/40 text-xs mb-1">Email</p>
-                            <p className="text-white text-sm break-all">
-                              {selectedContact.email}
-                            </p>
-                          </div>
-                          <div className="rounded-lg bg-white/5 p-3">
-                            <p className="text-white/40 text-xs mb-1">Phone</p>
-                            <p className="text-white text-sm">
-                              {selectedContact.phone || "—"}
-                            </p>
-                          </div>
-                          <div className="rounded-lg bg-white/5 p-3">
-                            <p className="text-white/40 text-xs mb-1">
-                              Submitted
-                            </p>
-                            <p className="text-white text-sm">
-                              {formatDate(selectedContact.timestamp)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="rounded-lg bg-white/5 p-3">
-                          <p className="text-white/40 text-xs mb-2">Message</p>
-                          <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">
-                            {selectedContact.message}
-                          </p>
-                        </div>
-                        <Button
-                          data-ocid="admin.contact.close_button"
-                          variant="outline"
-                          className="w-full border-white/20 text-white/70 hover:text-white hover:bg-white/10"
-                          onClick={() => setSelectedContact(null)}
-                        >
-                          Close
-                        </Button>
-                      </div>
-                    )}
-                  </DialogContent>
-                </Dialog>
               </motion.div>
             )}
 
@@ -1322,8 +1843,70 @@ function Dashboard({
                     )}
                   </div>
 
+                  {/* Blog views by article */}
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-5">
+                    <div className="flex items-center gap-2 mb-5">
+                      <BookOpen className="w-4 h-4 text-green-400" />
+                      <h3 className="text-white font-semibold text-sm">
+                        Blog Article View Counts
+                      </h3>
+                    </div>
+                    {blogViews.length === 0 ? (
+                      <div className="flex items-center justify-center h-48 text-white/30 text-sm">
+                        No blog views yet
+                      </div>
+                    ) : (
+                      <ResponsiveContainer width="100%" height={200}>
+                        <BarChart
+                          data={Object.entries(
+                            blogViews.reduce<Record<string, number>>(
+                              (acc, b) => {
+                                const key = `${b.title.slice(0, 30)}...`;
+                                acc[key] = (acc[key] ?? 0) + 1;
+                                return acc;
+                              },
+                              {},
+                            ),
+                          ).map(([name, count]) => ({ name, count }))}
+                        >
+                          <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="rgba(255,255,255,0.05)"
+                          />
+                          <XAxis
+                            dataKey="name"
+                            tick={{
+                              fill: "rgba(255,255,255,0.4)",
+                              fontSize: 9,
+                            }}
+                          />
+                          <YAxis
+                            tick={{
+                              fill: "rgba(255,255,255,0.4)",
+                              fontSize: 11,
+                            }}
+                            allowDecimals={false}
+                          />
+                          <RechartsTooltip
+                            contentStyle={{
+                              background: "#0d1b2a",
+                              border: "1px solid rgba(255,255,255,0.1)",
+                              borderRadius: 8,
+                              color: "#fff",
+                            }}
+                          />
+                          <Bar
+                            dataKey="count"
+                            fill="#38bdf8"
+                            radius={[4, 4, 0, 0]}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    )}
+                  </div>
+
                   {/* Pie chart: top chatbot topics */}
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-5 xl:col-span-2">
+                  <div className="rounded-xl border border-white/10 bg-white/5 p-5">
                     <div className="flex items-center gap-2 mb-5">
                       <MessageSquare className="w-4 h-4 text-green-400" />
                       <h3 className="text-white font-semibold text-sm">
@@ -1379,11 +1962,11 @@ function Dashboard({
                                   background: PIE_COLORS[i % PIE_COLORS.length],
                                 }}
                               />
-                              <span className="text-white/70 text-sm capitalize flex-1">
+                              <span className="text-white/70 text-sm capitalize">
                                 {t.name}
                               </span>
-                              <span className="text-white/40 text-xs">
-                                {t.value} mentions
+                              <span className="ml-auto text-white/40 text-sm">
+                                {t.value}x
                               </span>
                             </div>
                           ))}
@@ -1397,6 +1980,179 @@ function Dashboard({
           </div>
         </ScrollArea>
       </div>
+
+      {/* Contact Detail Modal */}
+      <Dialog
+        open={!!selectedContact}
+        onOpenChange={(o) => !o && setSelectedContact(null)}
+      >
+        <DialogContent
+          data-ocid="admin.contact.dialog"
+          className="border-white/10 text-white max-w-lg"
+          style={{ background: "#0d1b2a" }}
+        >
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Users className="w-4 h-4 text-green-400" />
+              Submission Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedContact && (
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-2 gap-3">
+                {selectedContact.name && (
+                  <div className="rounded-lg bg-white/5 p-3">
+                    <p className="text-white/40 text-xs mb-1">Name</p>
+                    <p className="text-white text-sm font-medium">
+                      {selectedContact.name}
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-lg bg-white/5 p-3">
+                  <p className="text-white/40 text-xs mb-1">Email</p>
+                  <p className="text-white text-sm break-all">
+                    {selectedContact.email}
+                  </p>
+                </div>
+                {selectedContact.phone && (
+                  <div className="rounded-lg bg-white/5 p-3">
+                    <p className="text-white/40 text-xs mb-1">Phone</p>
+                    <p className="text-white text-sm">
+                      {selectedContact.phone}
+                    </p>
+                  </div>
+                )}
+                <div className="rounded-lg bg-white/5 p-3">
+                  <p className="text-white/40 text-xs mb-1">Submitted</p>
+                  <p className="text-white text-sm">
+                    {msToDateStr(selectedContact.tsMs)}
+                  </p>
+                </div>
+                {selectedContact.source && (
+                  <div className="rounded-lg bg-white/5 p-3 col-span-2">
+                    <p className="text-white/40 text-xs mb-1">Source</p>
+                    <p className="text-green-400 text-sm font-medium">
+                      {selectedContact.source}
+                    </p>
+                  </div>
+                )}
+                {selectedContact.service && (
+                  <div className="rounded-lg bg-white/5 p-3 col-span-2">
+                    <p className="text-white/40 text-xs mb-1">Service</p>
+                    <p className="text-blue-400 text-sm font-medium">
+                      {selectedContact.service}
+                    </p>
+                  </div>
+                )}
+                {selectedContact.domain && (
+                  <div className="rounded-lg bg-white/5 p-3 col-span-2">
+                    <p className="text-white/40 text-xs mb-1">Domain</p>
+                    <p className="text-white text-sm">
+                      {selectedContact.domain}
+                    </p>
+                  </div>
+                )}
+              </div>
+              {selectedContact.message && (
+                <div className="rounded-lg bg-white/5 p-3">
+                  <p className="text-white/40 text-xs mb-2">Message</p>
+                  <p className="text-white text-sm leading-relaxed whitespace-pre-wrap">
+                    {selectedContact.message}
+                  </p>
+                </div>
+              )}
+              <Button
+                data-ocid="admin.contact.close_button"
+                variant="outline"
+                className="w-full border-white/20 text-white/70 hover:text-white hover:bg-white/10"
+                onClick={() => setSelectedContact(null)}
+              >
+                Close
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Generic Page Data Table ─────────────────────────────────────────────────
+interface ColumnDef {
+  key: string;
+  label: string;
+  truncate?: boolean;
+  render?: (row: LocalContact) => string;
+}
+
+function PageDataTable({
+  data,
+  columns,
+  emptyText,
+  ocidPrefix,
+  onRowClick,
+}: {
+  data: LocalContact[];
+  columns: ColumnDef[];
+  emptyText: string;
+  ocidPrefix: string;
+  onRowClick: (row: LocalContact) => void;
+}) {
+  return (
+    <div
+      data-ocid={`${ocidPrefix}.table`}
+      className="rounded-xl border border-white/10 bg-white/5 overflow-hidden"
+    >
+      {data.length === 0 ? (
+        <div data-ocid={`${ocidPrefix}.empty_state`}>
+          <EmptyState icon={<Mail className="w-10 h-10" />} text={emptyText} />
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="border-white/10 hover:bg-transparent">
+              <TableHead className="text-white/40 w-10">#</TableHead>
+              {columns.map((col) => (
+                <TableHead key={col.key} className="text-white/40">
+                  {col.label}
+                </TableHead>
+              ))}
+              <TableHead className="text-white/40 w-8" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.map((row, i) => (
+              <TableRow
+                key={`${row.tsMs}-${i}`}
+                data-ocid={`${ocidPrefix}.row.${i + 1}`}
+                className="border-white/10 hover:bg-white/5 cursor-pointer"
+                onClick={() => onRowClick(row)}
+              >
+                <TableCell className="text-white/30 text-xs">{i + 1}</TableCell>
+                {columns.map((col) => {
+                  const val = col.render
+                    ? col.render(row)
+                    : String(
+                        (row as unknown as Record<string, unknown>)[col.key] ??
+                          "—",
+                      );
+                  return (
+                    <TableCell
+                      key={col.key}
+                      className="text-white text-sm max-w-xs"
+                    >
+                      {col.truncate ? <p className="truncate">{val}</p> : val}
+                    </TableCell>
+                  );
+                })}
+                <TableCell>
+                  <Eye className="w-3.5 h-3.5 text-white/30" />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
     </div>
   );
 }
@@ -1409,9 +2165,11 @@ export default function AdminPanel() {
   const [authState, setAuthState] = useState<AuthState>("loading");
   const [sessionToken, setSessionToken] = useState<string | null>(null);
   const [chatbotLogs, setChatbotLogs] = useState<ChatbotLog[]>([]);
-  const [contactSubmissions, setContactSubmissions] = useState<
-    ContactFormEntry[]
-  >([]);
+  const [localContacts, setLocalContacts] = useState<LocalContact[]>([]);
+  const [blogViews, setBlogViews] = useState<BlogView[]>([]);
+  const [pageInteractions, setPageInteractions] = useState<PageInteraction[]>(
+    [],
+  );
   const [isLoadingData, setIsLoadingData] = useState(false);
 
   // On mount: check local credentials and session
@@ -1421,7 +2179,6 @@ export default function AdminPanel() {
       setSessionToken(stored);
       setAuthState("dashboard");
     } else {
-      // Check if admin has been set up locally
       const creds = localStorage.getItem(LOCAL_ADMIN_KEY);
       setAuthState(creds ? "login" : "setup");
     }
@@ -1431,12 +2188,11 @@ export default function AdminPanel() {
     async (_token: string) => {
       setIsLoadingData(true);
       try {
-        // Primary: read from localStorage (always reliable, never wiped by deployments)
+        // ── Chatbot logs ──
         const localLogs: ChatbotLog[] = (() => {
           try {
             const raw = localStorage.getItem("rankpro_chatbot_logs");
             if (!raw) return [];
-            // biome-ignore lint: dynamic parse
             const parsed = JSON.parse(raw) as Array<{
               id: number;
               question: string;
@@ -1454,21 +2210,14 @@ export default function AdminPanel() {
           }
         })();
 
-        const localContacts: ContactFormEntry[] = (() => {
+        // ── Contact submissions ──
+        const contacts: LocalContact[] = (() => {
           try {
             const raw = localStorage.getItem("rankpro_contact_submissions");
             if (!raw) return [];
-            // biome-ignore lint: dynamic parse
-            const parsed = JSON.parse(raw) as Array<{
-              name: string;
-              email: string;
-              phone: string;
-              message: string;
-              timestamp?: number;
-              date?: string;
-            }>;
+            const parsed = JSON.parse(raw) as RawSubmission[];
             return parsed
-              .filter((e) => e.name)
+              .filter((e) => e.email || e.name || e.domain)
               .map((e) => {
                 const tsMs = e.timestamp
                   ? e.timestamp
@@ -1476,11 +2225,15 @@ export default function AdminPanel() {
                     ? new Date(e.date).getTime()
                     : Date.now();
                 return {
-                  name: e.name,
-                  email: e.email,
-                  phone: e.phone,
-                  message: e.message ?? "",
-                  timestamp: BigInt(Math.floor(tsMs)) * 1_000_000n,
+                  name: e.name || "",
+                  email: e.email || "",
+                  phone: e.phone || "",
+                  message: e.message || "",
+                  source: e.source || "",
+                  service: e.service,
+                  caseStudy: e.caseStudy,
+                  domain: e.domain,
+                  tsMs,
                 };
               });
           } catch {
@@ -1488,8 +2241,50 @@ export default function AdminPanel() {
           }
         })();
 
+        // ── Blog views ──
+        const bViews: BlogView[] = (() => {
+          try {
+            const raw = localStorage.getItem("rankpro_blog_views");
+            if (!raw) return [];
+            const parsed = JSON.parse(raw) as Array<{
+              title: string;
+              tags: string[];
+              timestamp: number;
+            }>;
+            return parsed.map((e) => ({
+              title: e.title || "",
+              tags: e.tags || [],
+              tsMs: e.timestamp,
+            }));
+          } catch {
+            return [];
+          }
+        })();
+
+        // ── Page interactions ──
+        const interactions: PageInteraction[] = (() => {
+          try {
+            const raw = localStorage.getItem("rankpro_page_interactions");
+            if (!raw) return [];
+            const parsed = JSON.parse(raw) as Array<{
+              action: string;
+              page: string;
+              timestamp: number;
+            }>;
+            return parsed.map((e) => ({
+              action: e.action || "",
+              page: e.page || "",
+              tsMs: e.timestamp,
+            }));
+          } catch {
+            return [];
+          }
+        })();
+
         setChatbotLogs(localLogs);
-        setContactSubmissions(localContacts);
+        setLocalContacts(contacts);
+        setBlogViews(bViews);
+        setPageInteractions(interactions);
 
         // Secondary: merge backend data if available
         if (actor) {
@@ -1509,17 +2304,29 @@ export default function AdminPanel() {
                 (l) => !localLogTimes.has(l.timestamp.toString()),
               ),
             ];
-            const localContactTimes = new Set(
-              localContacts.map((c) => c.timestamp.toString()),
+            const localContactEmails = new Set(
+              contacts.map((c) => `${c.email}-${c.tsMs}`),
             );
-            const mergedContacts = [
-              ...localContacts,
-              ...backendContacts.filter(
-                (c) => !localContactTimes.has(c.timestamp.toString()),
-              ),
+            const mergedContacts: LocalContact[] = [
+              ...contacts,
+              ...backendContacts
+                .filter(
+                  (c) =>
+                    !localContactEmails.has(
+                      `${c.email}-${Number(c.timestamp / 1_000_000n)}`,
+                    ),
+                )
+                .map((c) => ({
+                  name: c.name,
+                  email: c.email,
+                  phone: c.phone,
+                  message: c.message,
+                  source: "Contact Page",
+                  tsMs: Number(c.timestamp / 1_000_000n),
+                })),
             ];
             setChatbotLogs(mergedLogs);
-            setContactSubmissions(mergedContacts);
+            setLocalContacts(mergedContacts);
           } catch {
             /* backend unavailable, localStorage data already displayed */
           }
@@ -1533,57 +2340,33 @@ export default function AdminPanel() {
     [actor],
   );
 
-  // Load data when entering dashboard
   useEffect(() => {
-    if (authState === "dashboard" && sessionToken) {
+    if (authState === "dashboard" && sessionToken && !isFetching) {
       void loadData(sessionToken);
     }
-  }, [authState, sessionToken, loadData]);
+  }, [authState, sessionToken, loadData, isFetching]);
 
   async function handleLogin(
     email: string,
     password: string,
   ): Promise<string | null> {
-    // Validate credentials locally first
-    const isHardcoded =
-      email === HARDCODED_EMAIL && password === HARDCODED_PASS;
-    let isLocalMatch = false;
-    if (!isHardcoded) {
-      const creds = localStorage.getItem(LOCAL_ADMIN_KEY);
-      if (creds) {
-        try {
-          const { email: storedEmail, password: storedPass } =
-            JSON.parse(creds);
-          isLocalMatch = email === storedEmail && password === storedPass;
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-    if (!isHardcoded && !isLocalMatch) return null;
-
-    // Ensure backend has credentials set up, then get real backend token
-    let backendToken: string | null = null;
-    if (actor) {
+    const creds = localStorage.getItem(LOCAL_ADMIN_KEY);
+    let valid = false;
+    if (creds) {
       try {
-        // Ensure backend credentials are set (idempotent)
-        await actor
-          .setupAdminCredentials(HARDCODED_EMAIL, HARDCODED_PASS)
-          .catch(() => {});
-        const result = await actor.loginAdmin(HARDCODED_EMAIL, HARDCODED_PASS);
-        if (result && result.length > 0) {
-          backendToken = result[0] ?? null;
-        }
+        // biome-ignore lint: dynamic parse
+        const saved = JSON.parse(creds) as { email: string; password: string };
+        valid = saved.email === email && saved.password === password;
       } catch {
         /* ignore */
       }
     }
-
-    const token = backendToken ?? `admin-local-${Date.now()}`;
+    if (!valid) {
+      valid = email === HARDCODED_EMAIL && password === HARDCODED_PASS;
+    }
+    if (!valid) return null;
+    const token = `local-admin-${Date.now()}`;
     sessionStorage.setItem(SESSION_KEY, token);
-    // Also store whether it is a real backend token
-    if (backendToken)
-      sessionStorage.setItem("admin_backend_token", backendToken);
     setSessionToken(token);
     setAuthState("dashboard");
     return token;
@@ -1593,45 +2376,28 @@ export default function AdminPanel() {
     email: string,
     password: string,
   ): Promise<boolean> {
-    try {
-      // Save credentials locally - no backend needed
-      localStorage.setItem(
-        LOCAL_ADMIN_KEY,
-        JSON.stringify({ email, password }),
-      );
-      // Also try backend in background (non-blocking)
-      if (actor) {
-        actor.setupAdminCredentials(email, password).catch(() => {});
-      }
-      setTimeout(() => setAuthState("login"), 800);
-      return true;
-    } catch {
-      return false;
-    }
+    localStorage.setItem(LOCAL_ADMIN_KEY, JSON.stringify({ email, password }));
+    setTimeout(() => setAuthState("login"), 1500);
+    return true;
   }
 
-  async function handleLogout() {
+  function handleLogout() {
     sessionStorage.removeItem(SESSION_KEY);
     setSessionToken(null);
     setChatbotLogs([]);
-    setContactSubmissions([]);
+    setLocalContacts([]);
+    setBlogViews([]);
+    setPageInteractions([]);
     setAuthState("login");
   }
 
-  // Loading state
-  if (authState === "loading" || isFetching) {
+  if (authState === "loading") {
     return (
       <div
         className="min-h-screen flex items-center justify-center"
         style={{ background: "#0a0f1e" }}
-        data-ocid="admin.loading_state"
       >
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-green-500/20 border border-green-500/30 flex items-center justify-center">
-            <Shield className="w-6 h-6 text-green-400 animate-pulse" />
-          </div>
-          <p className="text-white/50 text-sm">Checking admin access...</p>
-        </div>
+        <RefreshCw className="w-6 h-6 text-green-400 animate-spin" />
       </div>
     );
   }
@@ -1647,7 +2413,9 @@ export default function AdminPanel() {
   return (
     <Dashboard
       chatbotLogs={chatbotLogs}
-      contactSubmissions={contactSubmissions}
+      localContacts={localContacts}
+      blogViews={blogViews}
+      pageInteractions={pageInteractions}
       isLoading={isLoadingData}
       onRefresh={() => sessionToken && loadData(sessionToken)}
       onLogout={handleLogout}

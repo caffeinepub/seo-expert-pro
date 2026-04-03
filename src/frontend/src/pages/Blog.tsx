@@ -1038,6 +1038,22 @@ function BlogCard({ post, index }: { post: BlogPost; index: number }) {
       to="/blog/$id"
       params={{ id: post.id.toString() }}
       data-ocid={`blog.item.${index + 1}`}
+      onClick={() => {
+        try {
+          const entry = {
+            title: post.title,
+            tags: post.tags,
+            timestamp: Date.now(),
+          };
+          const existing = JSON.parse(
+            localStorage.getItem("rankpro_blog_views") || "[]",
+          );
+          existing.unshift(entry);
+          localStorage.setItem("rankpro_blog_views", JSON.stringify(existing));
+        } catch {
+          /* ignore */
+        }
+      }}
       style={{
         opacity: visible ? 1 : 0,
         transform: visible ? "translateY(0)" : "translateY(30px)",

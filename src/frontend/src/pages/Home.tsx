@@ -674,6 +674,24 @@ function FreeAuditSection() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    try {
+      const entry = {
+        domain,
+        email,
+        source: "Home - Free SEO Audit",
+        timestamp: Date.now(),
+      };
+      const existing = JSON.parse(
+        localStorage.getItem("rankpro_contact_submissions") || "[]",
+      );
+      existing.unshift(entry);
+      localStorage.setItem(
+        "rankpro_contact_submissions",
+        JSON.stringify(existing),
+      );
+    } catch {
+      /* ignore */
+    }
     setSent(true);
   };
 
@@ -755,10 +773,30 @@ function LeadForm() {
     e.preventDefault();
     try {
       await backend.submitContactForm(form.name, form.email, "", form.message);
-      setSent(true);
     } catch {
-      setSent(true);
+      /* ignore */
     }
+    try {
+      const entry = {
+        name: form.name,
+        email: form.email,
+        website: form.website,
+        message: form.message,
+        source: "Home - Lead Form",
+        timestamp: Date.now(),
+      };
+      const existing = JSON.parse(
+        localStorage.getItem("rankpro_contact_submissions") || "[]",
+      );
+      existing.unshift(entry);
+      localStorage.setItem(
+        "rankpro_contact_submissions",
+        JSON.stringify(existing),
+      );
+    } catch {
+      /* ignore */
+    }
+    setSent(true);
   };
 
   if (sent)
