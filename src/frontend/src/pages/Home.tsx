@@ -11,7 +11,20 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Suspense, lazy, useCallback, useEffect, useState } from "react";
-import type { BlogPost, FAQEntry } from "../backend";
+
+interface BlogPost {
+  id: string;
+  title: string;
+  summary?: string;
+  excerpt?: string;
+  category?: string;
+  date?: string;
+}
+interface FAQEntry {
+  id: string;
+  question: string;
+  answer: string;
+}
 import Footer from "../components/Footer";
 import Hero3DScene from "../components/Hero3DScene";
 import Navbar from "../components/Navbar";
@@ -232,12 +245,12 @@ export default function Home() {
 
   const loadData = useCallback(async () => {
     try {
-      setFaqs(await backend.getFAQs());
+      setFaqs((await backend.getFAQs()) as FAQEntry[]);
     } catch {
       /* ignore */
     }
     try {
-      setBlogs((await backend.listBlogPosts()).slice(0, 3));
+      setBlogs(((await backend.listBlogPosts()) as BlogPost[]).slice(0, 3));
     } catch {
       /* ignore */
     }

@@ -44,7 +44,7 @@ export const FAQEntry = IDL.Record({
 });
 
 export const idlService = IDL.Service({
-  '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+  '_initializeAccessControl' : IDL.Func([], [], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
   'changeAdminPassword' : IDL.Func(
       [IDL.Text, IDL.Text, IDL.Text],
@@ -133,7 +133,7 @@ export const idlFactory = ({ IDL }) => {
   const FAQEntry = IDL.Record({ 'question' : IDL.Text, 'answer' : IDL.Text });
   
   return IDL.Service({
-    '_initializeAccessControlWithSecret' : IDL.Func([IDL.Text], [], []),
+    '_initializeAccessControl' : IDL.Func([], [], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
     'changeAdminPassword' : IDL.Func(
         [IDL.Text, IDL.Text, IDL.Text],

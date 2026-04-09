@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useActor } from "@caffeineai/core-infrastructure";
 import {
   AlertTriangle,
   BarChart3,
@@ -58,12 +59,27 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type {
-  ChatbotLog,
-  ContactFormEntry,
-  backendInterface,
-} from "../backend";
-import { useActor } from "../hooks/useActor";
+import { createActor } from "../backend";
+
+interface ChatbotLog {
+  id: bigint;
+  question: string;
+  answer: string;
+  timestamp: bigint;
+}
+
+interface BackendContact {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  timestamp: bigint;
+}
+
+type backendInterface = Record<
+  string,
+  (...args: unknown[]) => Promise<unknown>
+>;
 
 type Tab =
   | "overview"
@@ -2295,7 +2311,7 @@ function PageDataTable({
 
 // ─── AdminPanel (orchestrator) ────────────────────────────────────────────────
 export default function AdminPanel() {
-  const { actor: _actor, isFetching } = useActor();
+  const { actor: _actor, isFetching } = useActor(createActor);
   const actor = _actor as backendInterface | null;
 
   const [authState, setAuthState] = useState<AuthState>("loading");
@@ -2427,10 +2443,10 @@ export default function AdminPanel() {
           try {
             const backendToken =
               sessionStorage.getItem("admin_backend_token") ?? _token;
-            const [backendLogs, backendContacts] = await Promise.all([
+            const [backendLogs, backendContacts] = (await Promise.all([
               actor.getChatbotLogsWithToken(backendToken),
               actor.getContactSubmissionsWithToken(backendToken),
-            ]);
+            ])) as [ChatbotLog[], BackendContact[]];
             const localLogTimes = new Set(
               localLogs.map((l) => l.timestamp.toString()),
             );

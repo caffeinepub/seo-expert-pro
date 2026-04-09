@@ -9,8 +9,8 @@ import Nat64 "mo:core/Nat64";
 import Nat "mo:core/Nat";
 import List "mo:core/List";
 import Principal "mo:core/Principal";
-import MixinAuthorization "authorization/MixinAuthorization";
-import AccessControl "authorization/access-control";
+import MixinAuthorization "mo:caffeineai-authorization/MixinAuthorization";
+import AccessControl "mo:caffeineai-authorization/access-control";
 
 actor {
   // Initialize the user system state

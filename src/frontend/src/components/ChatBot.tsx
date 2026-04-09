@@ -1,7 +1,7 @@
+import { useRouterState } from "@tanstack/react-router";
 import { MessageCircle, Send, X } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { useActor } from "../hooks/useActor";
 
 interface Message {
   id: number;
@@ -92,6 +92,9 @@ function getBotReply(input: string): string {
 }
 
 export default function ChatBot() {
+  const routerState = useRouterState();
+  const pathname = routerState.location.pathname;
+
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -99,7 +102,6 @@ export default function ChatBot() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const messageCount = messages.length;
-  const { actor } = useActor();
 
   function openChat() {
     if (!initialized) {
@@ -132,10 +134,7 @@ export default function ChatBot() {
     const botMsg: Message = { id: nextId(), text: botReply, from: "bot" };
     setMessages((prev) => [...prev, botMsg]);
 
-    // Log silently to backend and localStorage
-    if (actor) {
-      actor.logChatbotMessage(text, botReply).catch(() => {});
-    }
+    // Log to localStorage so admin panel can see conversations
     try {
       const existing = JSON.parse(
         localStorage.getItem("rankpro_chatbot_logs") ?? "[]",
@@ -162,6 +161,8 @@ export default function ChatBot() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messageCount]);
+
+  if (pathname === "/admin") return null;
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">

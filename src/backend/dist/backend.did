@@ -1,0 +1,68 @@
+type UserRole = 
+ variant {
+   admin;
+   guest;
+   user;
+ };
+type UserProfile = record {name: text;};
+type Time = int;
+type FAQEntry = 
+ record {
+   answer: text;
+   question: text;
+ };
+type ContactFormEntry = 
+ record {
+   email: text;
+   message: text;
+   name: text;
+   phone: text;
+   timestamp: Time;
+ };
+type ChatbotLog = 
+ record {
+   answer: text;
+   id: nat;
+   question: text;
+   timestamp: Time;
+ };
+type BlogPost = 
+ record {
+   content: text;
+   date: Time;
+   excerpt: text;
+   id: nat;
+   readTime: nat;
+   slug: text;
+   tags: vec text;
+   title: text;
+ };
+service : {
+  _initializeAccessControl: () -> ();
+  assignCallerUserRole: (user: principal, role: UserRole) -> ();
+  changeAdminPassword: (email: text, oldPassword: text, newPassword: 
+   text) -> (bool);
+  createBlogPost: (title: text, excerpt: text, content: text, tags: vec text,
+   slug: text, readTime: nat) -> (nat);
+  getBlogPostById: (id: nat) -> (BlogPost) query;
+  getCallerUserProfile: () -> (opt UserProfile) query;
+  getCallerUserRole: () -> (UserRole) query;
+  getChatbotLogs: () -> (vec ChatbotLog) query;
+  getChatbotLogsWithToken: (token: text) -> (vec ChatbotLog) query;
+  getContactSubmissions: () -> (vec ContactFormEntry) query;
+  getContactSubmissionsWithToken: (token: text) ->
+   (vec ContactFormEntry) query;
+  getFAQs: () -> (vec FAQEntry) query;
+  getUserProfile: (user: principal) -> (opt UserProfile) query;
+  hasAdminSetup: () -> (bool) query;
+  isCallerAdmin: () -> (bool) query;
+  listBlogPosts: () -> (vec BlogPost) query;
+  logChatbotMessage: (question: text, answer: text) -> ();
+  loginAdmin: (email: text, password: text) -> (opt text);
+  logoutAdmin: (token: text) -> ();
+  saveCallerUserProfile: (profile: UserProfile) -> ();
+  setupAdminCredentials: (email: text, password: text) -> (bool);
+  submitContactForm: (name: text, email: text, phone: text, message: 
+   text) -> ();
+  verifyAdminToken: (token: text) -> (bool) query;
+}
